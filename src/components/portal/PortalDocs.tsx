@@ -24,6 +24,7 @@ const STATUS: Record<string, { label: string; cls: string }> = {
 export function PortalDocs() {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"pending" | "approved">("pending");
 
   useEffect(() => {
     apiGet<Doc[]>("/api/portal/design-docs")
@@ -31,21 +32,49 @@ export function PortalDocs() {
       .finally(() => setLoading(false));
   }, []);
 
+  const pending = docs.filter((d) => d.status === "SENT");
+  const approved = docs.filter((d) => d.status === "APPROVED");
+  const shown = tab === "pending" ? pending : approved;
+
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Documentos de diseño</h1>
-      <p className="mb-6 text-sm text-muted">Revisa el documento, apruébalo o deja un comentario para el equipo.</p>
+      <h1 className="text-2xl font-semibold tracking-tight">Mis aprobaciones</h1>
+      <p className="mb-4 text-sm text-muted">Revisa cada documento enviado, apruébalo o deja un comentario para el equipo.</p>
+
+      {/* Pestañas Por aprobar / Aprobados */}
+      <div className="mb-4 flex gap-1 rounded-xl border border-border bg-surface p-1">
+        {(
+          [
+            ["pending", `Por aprobar (${pending.length})`],
+            ["approved", `Aprobados (${approved.length})`],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => setTab(key)}
+            className={`flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors sm:flex-none ${
+              tab === key ? "bg-brand-soft text-brand" : "text-muted hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <SkeletonCards />
-      ) : docs.length === 0 ? (
+      ) : shown.length === 0 ? (
         <EmptyState
-          title="Sin documentos por ahora"
-          description="Cuando el equipo de Clazz te envíe un documento de diseño, aparecerá aquí para tu revisión."
+          title={tab === "pending" ? "Nada pendiente por aprobar" : "Aún no has aprobado documentos"}
+          description={
+            tab === "pending"
+              ? "Cuando el equipo de Clazz te envíe un documento de diseño, aparecerá aquí para tu revisión."
+              : "Los documentos que apruebes quedarán guardados aquí."
+          }
         />
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {docs.map((d) => (
+          {shown.map((d) => (
             <Link
               key={d.id}
               href={`/portal/documentos/${d.id}`}

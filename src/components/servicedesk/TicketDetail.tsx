@@ -52,7 +52,16 @@ function SlaBadge({ label, due, done }: { label: string; due: string | null; don
   );
 }
 
-export function TicketDetail({ ticketId }: { ticketId: string }) {
+export function TicketDetail({
+  ticketId,
+  backHref = "/service-desk",
+  backLabel = "Mesa de servicio",
+}: {
+  ticketId: string;
+  // Enlace de regreso: el portal del cliente usa /portal/soporte.
+  backHref?: string;
+  backLabel?: string;
+}) {
   const { can } = useMe();
   const [d, setD] = useState<Detail | null>(null);
   const [users, setUsers] = useState<UserOpt[]>([]);
@@ -132,8 +141,8 @@ export function TicketDetail({ ticketId }: { ticketId: string }) {
       {/* Columna principal: descripción + conversación */}
       <div className="space-y-5 lg:col-span-2">
         <div>
-          <Link href="/service-desk" className="text-xs text-muted hover:underline">
-            ← Mesa de servicio
+          <Link href={backHref} className="text-xs text-muted hover:underline">
+            ← {backLabel}
           </Link>
           <div className="mt-1 flex flex-wrap items-center gap-2">
             <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${TICKET_STATUS_CLASSES[d.status]}`}>

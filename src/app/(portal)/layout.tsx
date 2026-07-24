@@ -23,8 +23,8 @@ export default async function PortalLayout({ children }: { children: React.React
 
   const items: NavItem[] = [
     { href: "/portal/proyectos", label: "Mis proyectos", icon: "projects" },
-    { href: "/portal/documentos", label: "Documentos", icon: "discovery" },
-    { href: "/portal/soporte", label: "Soporte", icon: "service" },
+    { href: "/portal/documentos", label: "Mis aprobaciones", icon: "discovery" },
+    { href: "/portal/soporte", label: "Mis tickets", icon: "service" },
   ];
 
   return (

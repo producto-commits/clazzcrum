@@ -9,6 +9,7 @@ import { Label, Input, Button, Alert } from "@/components/ui/Field";
 import { Textarea, Select, PRIORITY_LABELS, PRIORITY_CLASSES } from "@/components/ui/Inputs";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TicketCard } from "@/components/servicedesk/TicketCard";
 import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_CLASSES,
@@ -21,11 +22,15 @@ import {
 type Cat = { id: string; name: string };
 type ClientOpt = { id: string; name: string };
 
+const VIEW_KEY = "clazz.tickets.view";
+
 export default function ServiceDeskPage() {
-  const { can } = useMe();
+  const { me, can } = useMe();
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: "", priority: "", q: "" });
+  // Vista de fichas (default) o lista; se recuerda por navegador.
+  const [view, setView] = useState<"cards" | "list">("cards");
   const [open, setOpen] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
   const [clients, setClients] = useState<ClientOpt[]>([]);
@@ -52,6 +57,27 @@ export default function ServiceDeskPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
+
+  // Recordar la vista elegida (fichas/lista).
+  useEffect(() => {
+    const saved = localStorage.getItem(VIEW_KEY);
+    if (saved === "list" || saved === "cards") setView(saved);
+  }, []);
+  function switchView(v: "cards" | "list") {
+    setView(v);
+    localStorage.setItem(VIEW_KEY, v);
+  }
+
+  // Acceso rápido: tomar el caso (asignármelo). Si es nuevo pasa a Asignado.
+  async function assignMe(ticketId: string) {
+    if (!me) return;
+    const t = tickets.find((x) => x.id === ticketId);
+    await apiSend(`/api/tickets/${ticketId}`, "PATCH", {
+      assigneeId: me.id,
+      ...(t?.status === "NEW" ? { status: "ASSIGNED" } : {}),
+    });
+    await load();
+  }
 
   async function openModal() {
     setError(null);
@@ -120,6 +146,24 @@ export default function ServiceDeskPage() {
           <option value="HIGH">Alta</option>
           <option value="CRITICAL">Crítica</option>
         </Select>
+
+        {/* Cambio de vista: fichas / lista */}
+        <div className="ml-auto flex items-center rounded-lg border border-border bg-surface p-0.5">
+          <button
+            onClick={() => switchView("cards")}
+            title="Ver como fichas"
+            className={`rounded-md p-1.5 transition-colors ${view === "cards" ? "bg-brand-soft text-brand" : "text-muted hover:text-foreground"}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></svg>
+          </button>
+          <button
+            onClick={() => switchView("list")}
+            title="Ver como lista"
+            className={`rounded-md p-1.5 transition-colors ${view === "list" ? "bg-brand-soft text-brand" : "text-muted hover:text-foreground"}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+          </button>
+        </div>
       </div>
 
       {loading ? (
@@ -140,6 +184,20 @@ export default function ServiceDeskPage() {
             ) : undefined
           }
         />
+      ) : view === "cards" ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {tickets.map((tk) => (
+            <TicketCard
+              key={tk.id}
+              t={tk}
+              href={`/service-desk/${tk.id}`}
+              showClient={isStaff}
+              canAssignMe={can("edit", "ticket")}
+              meId={me?.id}
+              onAssignMe={assignMe}
+            />
+          ))}
+        </div>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border">
           {tickets.map((tk) => {
