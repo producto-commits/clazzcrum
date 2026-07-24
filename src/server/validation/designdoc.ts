@@ -3,6 +3,7 @@ import { z } from "zod";
 export const designDocCreateSchema = z.object({
   projectId: z.string().min(1, "Selecciona un proyecto"),
   title: z.string().trim().min(2).max(200),
+  kind: z.enum(["design", "manual", "tests", "delivery"]).optional(),
 });
 
 // Las respuestas son un mapa sección → texto.

@@ -19,6 +19,7 @@ import {
 type Msg = { id: string; body: string; visibility: "PUBLIC" | "INTERNAL"; createdAt: string; user: { id: string; name: string } | null };
 type Detail = {
   id: string;
+  number?: number;
   subject: string;
   description: string;
   status: TicketStatus;
@@ -162,7 +163,7 @@ export function TicketDetail({
               {PRIORITY_LABELS[d.priority]}
             </span>
           </div>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{d.subject}</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{d.number != null && <span className="mr-2 font-mono text-muted">#{String(d.number).padStart(3, "0")}</span>}{d.subject}</h1>
           <p className="text-sm text-muted">
             {d.client.name}
             {d.reporter && ` · reportó ${d.reporter.name}`}

@@ -3,6 +3,7 @@ import { getCurrentUser, getUserPermissions } from "@/server/auth/session";
 import { LogoutButton } from "@/components/auth/LogoutButton";
 import { Sidebar, type NavItem } from "@/components/nav/Sidebar";
 import { Wordmark } from "@/components/brand/Logo";
+import { AlertsBell } from "@/components/nav/AlertsBell";
 import { t } from "@/i18n";
 
 function initials(name: string) {
@@ -31,6 +32,8 @@ export default async function DashboardLayout({
 
   const items: NavItem[] = [{ href: "/dashboard", label: t.nav.dashboard, icon: "dashboard" }];
   if (can("project")) items.push({ href: "/projects", label: t.nav.projects, icon: "projects" });
+  const isLead = user.roles.some((r) => ["admin", "tech_lead"].includes(r.role.key));
+  if (isLead) items.push({ href: "/daily", label: "Daily", icon: "dashboard" });
   if (isStaff) items.push({ href: "/meetings", label: "Reuniones", icon: "meetings" });
   if (can("ticket")) items.push({ href: "/service-desk", label: t.nav.serviceDesk, icon: "service" });
   if (can("design_doc")) items.push({ href: "/discovery", label: t.nav.discovery, icon: "discovery" });
@@ -43,6 +46,7 @@ export default async function DashboardLayout({
         <div className="mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
           <Wordmark size={30} />
           <div className="ml-auto flex items-center gap-3">
+            <AlertsBell />
             <div className="hidden text-right sm:block">
               <div className="text-sm font-medium leading-tight">{user.name}</div>
               <div className="text-xs text-muted">{roleNames}</div>

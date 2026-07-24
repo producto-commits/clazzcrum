@@ -7,9 +7,11 @@ import { Button, Alert } from "@/components/ui/Field";
 import { Textarea } from "@/components/ui/Inputs";
 
 type Comment = { id: string; body: string; version: number; createdAt: string; author: { id: string; name: string } | null };
+type Att = { id: string; fileName: string };
 type Doc = {
   id: string;
   title: string;
+  kind?: string;
   status: "SENT" | "APPROVED";
   currentVersion: number;
   approvedAt: string | null;
@@ -23,6 +25,7 @@ function fmt(d: string) {
 
 export function PortalDocDetail({ docId }: { docId: string }) {
   const [doc, setDoc] = useState<Doc | null>(null);
+  const [pdfAtt, setPdfAtt] = useState<Att | null>(null);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");
   const [busy, setBusy] = useState(false);
@@ -31,6 +34,9 @@ export function PortalDocDetail({ docId }: { docId: string }) {
   const load = useCallback(async () => {
     try {
       setDoc(await apiGet<Doc>(`/api/portal/design-docs/${docId}`));
+      // Si el equipo adjuntó un PDF propio, ese es el documento que se muestra.
+      const atts = await apiGet<Att[]>(`/api/attachments?entityType=design_doc&entityId=${docId}`).catch(() => [] as Att[]);
+      setPdfAtt(atts.find((a) => a.fileName.toLowerCase().endsWith(".pdf")) ?? null);
     } catch {
       setDoc(null);
     } finally {
@@ -103,7 +109,7 @@ export function PortalDocDetail({ docId }: { docId: string }) {
       <div className="overflow-hidden rounded-2xl border border-border bg-surface">
         <iframe
           title={`Documento ${doc.title}`}
-          src={`/api/portal/design-docs/${docId}/pdf`}
+          src={pdfAtt ? `/api/attachments/${pdfAtt.id}` : `/api/portal/design-docs/${docId}/pdf`}
           className="h-[70vh] w-full"
         />
       </div>

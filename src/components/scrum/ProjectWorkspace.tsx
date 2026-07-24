@@ -123,10 +123,17 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
       if (st) setCompleteStory({ id: st.id, title: st.title });
       return;
     }
+    // Bloquear exige explicar el motivo.
+    let blockReason: string | undefined;
+    if (status === "BLOCKED") {
+      const r = window.prompt("¿Cuál es el motivo del bloqueo?");
+      if (!r || !r.trim()) return;
+      blockReason = r.trim();
+    }
     const prev = stories;
     setStories((cur) => cur.map((s) => (s.id === storyId ? { ...s, status } : s)));
     try {
-      await apiSend(`/api/stories/${storyId}`, "PATCH", { status });
+      await apiSend(`/api/stories/${storyId}`, "PATCH", { status, ...(blockReason ? { blockReason } : {}) });
     } catch {
       setStories(prev); // revertir si falla
     }

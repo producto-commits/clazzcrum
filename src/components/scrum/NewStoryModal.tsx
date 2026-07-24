@@ -28,8 +28,6 @@ export function NewStoryModal({
     epicId: "",
     sprintId: "",
     estimateHours: "",
-    startDate: "",
-    estimatedEnd: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -46,11 +44,9 @@ export function NewStoryModal({
         epicId: form.epicId || null,
         sprintId: form.sprintId || null,
         estimateHours: form.estimateHours === "" ? null : Number(form.estimateHours),
-        startDate: form.startDate || null,
-        estimatedEnd: form.estimatedEnd || null,
         // Sin estado: entra en Backlog por defecto.
       });
-      setForm({ title: "", priority: "MEDIUM", epicId: "", sprintId: "", estimateHours: "", startDate: "", estimatedEnd: "" });
+      setForm({ title: "", priority: "MEDIUM", epicId: "", sprintId: "", estimateHours: "" });
       onClose();
       onCreated();
     } catch (err) {
@@ -96,24 +92,6 @@ export function NewStoryModal({
               min="0"
               value={form.estimateHours}
               onChange={(e) => setForm({ ...form, estimateHours: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="startDate">Fecha de inicio</Label>
-            <Input
-              id="startDate"
-              type="date"
-              value={form.startDate}
-              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="estimatedEnd">Posible fecha de fin</Label>
-            <Input
-              id="estimatedEnd"
-              type="date"
-              value={form.estimatedEnd}
-              onChange={(e) => setForm({ ...form, estimatedEnd: e.target.value })}
             />
           </div>
           <div>

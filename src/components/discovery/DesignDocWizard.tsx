@@ -7,6 +7,7 @@ import { Button, Input, Alert } from "@/components/ui/Field";
 import { Textarea } from "@/components/ui/Inputs";
 import { Modal } from "@/components/ui/Modal";
 import { DESIGN_SECTIONS } from "@/lib/designDocSections";
+import { Attachments } from "@/components/ui/Attachments";
 
 type Version = { id: string; version: number; changeNote: string | null; createdAt: string };
 type DocComment = { id: string; body: string; version: number; createdAt: string; author: { id: string; name: string } | null };
@@ -176,6 +177,13 @@ export function DesignDocWizard({ docId }: { docId: string }) {
           <Button variant="ghost" className="w-full" onClick={() => setVersionOpen(true)}>
             Nueva versión
           </Button>
+        </div>
+
+        {/* PDF propio: si se adjunta, el cliente ve ese PDF en su portal */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Archivo (PDF propio)</h2>
+          <p className="mb-2 text-xs text-muted">Para manuales, pruebas o entregas — o si prefieres subir el PDF final en vez de usar la entrevista.</p>
+          <Attachments entityType="design_doc" entityId={docId} canEdit reloadKey={0} />
         </div>
 
         <div className="space-y-2 rounded-2xl border border-border bg-surface p-4">

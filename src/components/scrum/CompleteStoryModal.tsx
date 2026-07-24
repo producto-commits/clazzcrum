@@ -50,7 +50,6 @@ export function CompleteStoryModal({
     if (!evidence.trim()) return setError("Describe la evidencia.");
     if (!file) return setError("Adjunta un archivo de evidencia.");
     if (spentHours === "" || Number(spentHours) < 0) return setError("Indica las horas reales dedicadas.");
-    if (!actualEnd) return setError("Indica la fecha de finalización.");
 
     setSaving(true);
     try {
@@ -104,14 +103,8 @@ export function CompleteStoryModal({
             />
           </div>
           <div>
-            <Label htmlFor="actualEnd">Fecha de finalización *</Label>
-            <Input
-              id="actualEnd"
-              type="date"
-              required
-              value={actualEnd}
-              onChange={(e) => setActualEnd(e.target.value)}
-            />
+            <Label htmlFor="actualEnd">Fecha de finalización (automática)</Label>
+            <Input id="actualEnd" type="date" value={actualEnd} disabled readOnly />
           </div>
         </div>
         <div>

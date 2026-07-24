@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     data: {
       projectId: parsed.data.projectId,
       title: parsed.data.title,
+      kind: parsed.data.kind ?? "design",
       currentVersion: 1,
       versions: { create: { version: 1, answers: {} } },
     },

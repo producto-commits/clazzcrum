@@ -45,7 +45,7 @@ export function TicketCard({
 }) {
   const router = useRouter();
   const resSla = slaState(t.resolutionDueAt, t.resolvedAt);
-  const shortId = t.id.slice(-4).toUpperCase();
+  const shortId = t.number != null ? String(t.number).padStart(3, "0") : t.id.slice(-4).toUpperCase();
   const overdue = resSla === "overdue";
   const mine = !!meId && t.assignee?.id === meId;
 

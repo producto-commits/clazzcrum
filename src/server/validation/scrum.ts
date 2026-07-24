@@ -68,6 +68,7 @@ export const storyCreateSchema = z.object({
   estimatedEnd: z.coerce.date().optional().nullable(),
   actualEnd: z.coerce.date().optional().nullable(),
   completionEvidence: z.string().trim().max(4000).optional().nullable(),
+  blockReason: z.string().trim().max(1000).optional().nullable(),
 });
 export const storyUpdateSchema = storyCreateSchema.partial().omit({ projectId: true });
 

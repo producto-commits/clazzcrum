@@ -57,7 +57,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (data.status) {
     const current = await prisma.userStory.findUnique({
       where: { id },
-      select: { status: true, actualEnd: true, completionEvidence: true },
+      select: { status: true, actualEnd: true, completionEvidence: true, blockedAt: true, blockedDays: true },
     });
 
     if (data.status === "DONE" && current?.status !== "DONE") {
@@ -80,6 +80,20 @@ export async function PATCH(req: Request, { params }: Ctx) {
       if (data.actualEnd === undefined && !current?.actualEnd) data.actualEnd = new Date();
     } else if (data.status !== "DONE" && current?.status === "DONE" && data.actualEnd === undefined) {
       data.actualEnd = null;
+    }
+
+    // Bloqueo: motivo obligatorio + días acumulados automáticos.
+    if (data.status === "BLOCKED" && current?.status !== "BLOCKED") {
+      const reason = (parsed.data.blockReason ?? "").trim();
+      if (!reason) {
+        return fail("Indica el motivo del bloqueo", 422, { requiresBlockReason: true });
+      }
+      data.blockReason = reason;
+      data.blockedAt = new Date();
+    } else if (current?.status === "BLOCKED" && data.status !== "BLOCKED") {
+      const extra = current.blockedAt ? (Date.now() - current.blockedAt.getTime()) / 86400000 : 0;
+      data.blockedDays = Math.round(((current.blockedDays ?? 0) + extra) * 100) / 100;
+      data.blockedAt = null;
     }
   }
 

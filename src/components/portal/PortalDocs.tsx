@@ -9,11 +9,19 @@ import { EmptyState } from "@/components/ui/EmptyState";
 type Doc = {
   id: string;
   title: string;
+  kind?: string;
   status: "SENT" | "APPROVED";
   currentVersion: number;
   approvedAt: string | null;
   project: { id: string; name: string };
   _count: { comments: number };
+};
+
+const KIND_LABELS: Record<string, string> = {
+  design: "Documento de diseño",
+  manual: "Manual",
+  tests: "Documento de pruebas",
+  delivery: "Documento de entrega",
 };
 
 const STATUS: Record<string, { label: string; cls: string }> = {
@@ -86,7 +94,7 @@ export function PortalDocs() {
                   {STATUS[d.status].label}
                 </span>
               </div>
-              <div className="mt-1 text-sm text-muted">{d.project.name}</div>
+              <div className="mt-1 text-sm text-muted">{KIND_LABELS[d.kind ?? "design"]} · {d.project.name}</div>
               <div className="mt-3 flex gap-2 text-xs text-muted">
                 <span className="rounded-full bg-background px-2 py-0.5">Versión {d.currentVersion}</span>
                 {d._count.comments > 0 && (

@@ -39,6 +39,9 @@ type Detail = {
   startDate: string | null;
   estimatedEnd: string | null;
   actualEnd: string | null;
+  blockReason: string | null;
+  blockedAt: string | null;
+  blockedDays: number;
   completionEvidence: string | null;
   assignees: { user: { id: string; name: string } }[];
   tasks: { id: string; title: string; done: boolean; assignee: { id: string; name: string } | null }[];
@@ -104,8 +107,6 @@ export function StoryPanel({
         spentHours: d.spentHours,
         epicId: d.epicId || null,
         sprintId: d.sprintId || null,
-        startDate: d.startDate || null,
-        estimatedEnd: d.estimatedEnd || null,
         tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
         assigneeIds: d.assignees.map((a) => a.user.id),
       });
@@ -121,6 +122,13 @@ export function StoryPanel({
     if (!d) return;
     if (value === "DONE" && d.status !== "DONE") {
       setCompleteOpen(true);
+      return;
+    }
+    if (value === "BLOCKED" && d.status !== "BLOCKED") {
+      const reason = window.prompt("¿Cuál es el motivo del bloqueo?");
+      if (!reason || !reason.trim()) return;
+      apiSend(`/api/stories/${d.id}`, "PATCH", { status: "BLOCKED", blockReason: reason.trim() })
+        .then(() => { load(); onChanged(); });
       return;
     }
     set("status", value);
@@ -313,27 +321,17 @@ export function StoryPanel({
               </div>
             </div>
 
-            {/* Fechas */}
+            {/* Fechas calculadas por el motor de planificación (solo lectura) */}
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <label className="mb-1 block text-xs text-muted">Fecha de inicio</label>
-                <input
-                  type="date"
-                  disabled={!canEdit}
-                  value={toDateInput(d.startDate)}
-                  onChange={(e) => set("startDate", e.target.value || null)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 disabled:opacity-70"
-                />
+                <label className="mb-1 block text-xs text-muted">Inicio probable (calculado)</label>
+                <input type="date" disabled readOnly value={toDateInput(d.startDate)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 opacity-70" />
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted">Fecha de fin (planeada)</label>
-                <input
-                  type="date"
-                  disabled={!canEdit}
-                  value={toDateInput(d.estimatedEnd)}
-                  onChange={(e) => set("estimatedEnd", e.target.value || null)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 disabled:opacity-70"
-                />
+                <label className="mb-1 block text-xs text-muted">Cierre probable (calculado)</label>
+                <input type="date" disabled readOnly value={toDateInput(d.estimatedEnd)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 opacity-70" />
               </div>
               {d.actualEnd && (
                 <div className="col-span-2 text-xs text-muted">
@@ -384,6 +382,21 @@ export function StoryPanel({
               <Button onClick={saveFields} loading={saving} className="w-auto self-start px-5">
                 Guardar cambios
               </Button>
+            )}
+
+            {/* Bloqueo: motivo + días acumulados (solo lectura) */}
+            {(d.status === "BLOCKED" || d.blockedDays > 0) && (
+              <section className="rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm">
+                <h4 className="mb-1 text-sm font-semibold text-danger">Bloqueo</h4>
+                {d.blockReason && <p className="whitespace-pre-wrap">{d.blockReason}</p>}
+                <p className="mt-1 text-xs text-muted">
+                  Días en bloqueo:{" "}
+                  <span className="font-semibold text-foreground">
+                    {(d.blockedDays + (d.status === "BLOCKED" && d.blockedAt ? (Date.now() - new Date(d.blockedAt).getTime()) / 86400000 : 0)).toFixed(1)}
+                  </span>{" "}
+                  (automático)
+                </p>
+              </section>
             )}
 
             {/* Evidencia de cumplimiento */}

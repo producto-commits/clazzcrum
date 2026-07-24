@@ -58,6 +58,7 @@ export const SLA_CLASSES: Record<SlaState, string> = {
 
 export type TicketRow = {
   id: string;
+  number?: number;
   subject: string;
   description?: string | null;
   status: TicketStatus;

@@ -12,11 +12,19 @@ import { EmptyState } from "@/components/ui/EmptyState";
 type Doc = {
   id: string;
   title: string;
+  kind?: string;
   status: "DRAFT" | "SENT" | "APPROVED";
   currentVersion: number;
   project: { id: string; name: string };
 };
 type ProjectOpt = { id: string; name: string };
+
+const KIND_LABELS: Record<string, string> = {
+  design: "Documento de diseño",
+  manual: "Manual",
+  tests: "Documento de pruebas",
+  delivery: "Documento de entrega",
+};
 
 const STATUS: Record<string, { label: string; cls: string }> = {
   DRAFT: { label: "Borrador", cls: "bg-slate-500/15 text-slate-400" },
@@ -29,7 +37,7 @@ export default function DiscoveryPage() {
   const [projects, setProjects] = useState<ProjectOpt[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ projectId: "", title: "" });
+  const [form, setForm] = useState({ projectId: "", title: "", kind: "design" });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -124,6 +132,15 @@ export default function DiscoveryPage() {
                   {p.name}
                 </option>
               ))}
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="dkind">Tipo de documento *</Label>
+            <Select id="dkind" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
+              <option value="design">Documento de diseño</option>
+              <option value="manual">Manual</option>
+              <option value="tests">Documento de pruebas</option>
+              <option value="delivery">Documento de entrega</option>
             </Select>
           </div>
           <div>

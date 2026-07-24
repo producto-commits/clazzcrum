@@ -13,7 +13,9 @@ type SLite = {
   priority: string;
   estimateHours: number | null;
   estimatedEnd: string | null;
+  startDate?: string | null;
   actualEnd: string | null;
+  blockReason?: string | null;
   assignees: { user: { id: string; name: string } }[];
   _count: { tasks: number; comments: number; acceptanceCriteria: number };
 };
@@ -64,6 +66,11 @@ function StoryRow({ s, onOpen }: { s: SLite; onOpen: () => void }) {
         <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${COMPLIANCE_META[c].cls}`}>⚠ {COMPLIANCE_META[c].label}</span>
       )}
       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${PRIORITY_CLASSES[s.priority]}`}>{PRIORITY_LABELS[s.priority]}</span>
+      {s.startDate && s.estimatedEnd && (
+        <span className="hidden shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted lg:inline" title="Fechas calculadas por el motor">
+          {fmt(s.startDate)} → {fmt(s.estimatedEnd)}
+        </span>
+      )}
       {s.estimateHours != null && <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">{s.estimateHours}h</span>}
       <span className="hidden shrink-0 text-[11px] text-muted sm:inline">{STATUS_LABEL[s.status]}</span>
       <div className="flex shrink-0 -space-x-1">
@@ -238,7 +245,6 @@ export function ProjectStructure({
               </div>
             </header>
 
-            {!clientView && (
             <div className="space-y-3 p-3">
               {sp.epics.length === 0 && <p className="px-1 text-xs text-muted">Sin fases en este hito.</p>}
               {sp.epics.map((e) => (
@@ -263,17 +269,18 @@ export function ProjectStructure({
                       )}
                     </div>
                   </div>
+                  {!clientView && (
                   <div className="space-y-0.5 px-2 pb-2">
                     {e.stories.map((s) => (
                       <StoryRow key={s.id} s={s} onOpen={() => onOpenStory(s.id)} />
                     ))}
                     {canEdit && <InlineAdd placeholder="Actividad" onAdd={(v) => addStory(e.id, v)} />}
                   </div>
+                  )}
                 </div>
               ))}
               {canPlan && <InlineAdd placeholder="Fase" onAdd={(v) => addEpic(sp.id, v)} />}
             </div>
-            )}
           </section>
         );
       })}
