@@ -60,6 +60,20 @@ function hrs(s: Story) {
   const est = s.estimateHours ? `${s.estimateHours}h est.` : null;
   return [real, est].filter(Boolean).join(" · ");
 }
+// Días bloqueada = acumulado (blockedDays, se suma al desbloquear) + el tramo
+// actual desde blockedAt hasta hoy, para que refleje el bloqueo en curso.
+function blockedLabel(s: Story) {
+  let days = s.blockedDays || 0;
+  if (s.blockedAt) {
+    const start = new Date(s.blockedAt);
+    const startUTC = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+    const now = new Date();
+    const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    days += Math.max(0, Math.round((todayUTC - startUTC) / 86400000));
+  }
+  if (days <= 0) return "Bloqueada hoy";
+  return `${days} día${days === 1 ? "" : "s"} bloqueada`;
+}
 // YYYY-MM-DD de "ayer" en UTC (coincide con el default del backend).
 function yesterdayKey() {
   const n = new Date();
@@ -257,7 +271,7 @@ export default function DailyPage() {
                       <StoryLine s={s} bare />
                       {s.blockReason && <p className="mt-0.5 line-clamp-2 text-[11px] text-muted">↳ {s.blockReason}</p>}
                       <p className="mt-0.5 text-[10px] font-medium text-danger">
-                        {s.blockedDays > 0 ? `${s.blockedDays} día(s) bloqueada` : "Bloqueada hoy"}
+                        {blockedLabel(s)}
                         {s.blockedAt && ` · desde ${fmtShort(s.blockedAt)}`}
                       </p>
                     </div>
