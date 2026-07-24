@@ -180,7 +180,7 @@ model Project {
   estimatedEnd  DateTime?
   actualEnd     DateTime?
   // Motor de planificación
-  sprintLengthDays Int       @default(10) // duración del sprint en días hábiles
+  sprintWeeks      Int       @default(2) // duración del sprint en semanas (lunes a domingo)
   plannedEndAt     DateTime? // fin del proyecto calculado por el motor
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt

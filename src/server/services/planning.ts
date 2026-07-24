@@ -172,22 +172,18 @@ export async function replanProject(projectId: string): Promise<ReplanResult> {
     planned++;
   }
 
-  // Sprints automáticos: ventanas de N días hábiles desde el inicio.
-  const sprintLen = Math.max(1, project.sprintLengthDays || 10);
+  // Sprints automáticos: ventanas de LUNES a DOMINGO, de N semanas cada una.
+  // El Sprint 1 arranca el lunes de la semana en que inicia el proyecto.
+  const weeks = Math.max(1, project.sprintWeeks || 2);
   const windows: { index: number; start: Date; end: Date }[] = [];
   if (projectEnd) {
-    let d = nextWorkday(start, holidays);
+    const firstMonday = addDays(start, -((start.getUTCDay() + 6) % 7)); // lunes de esa semana
+    let winStart = firstMonday;
     let idx = 1;
-    while (d <= projectEnd && idx <= 100) {
-      const winStart = d;
-      let count = 1;
-      let last = d;
-      while (count < sprintLen) {
-        last = nextWorkday(addDays(last, 1), holidays);
-        count++;
-      }
-      windows.push({ index: idx, start: winStart, end: last });
-      d = nextWorkday(addDays(last, 1), holidays);
+    while (winStart <= projectEnd && idx <= 100) {
+      const winEnd = addDays(winStart, weeks * 7 - 1); // termina domingo
+      windows.push({ index: idx, start: winStart, end: winEnd });
+      winStart = addDays(winEnd, 1); // siguiente lunes
       idx++;
     }
   }

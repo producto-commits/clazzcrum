@@ -24,7 +24,7 @@ type PlanSprint = {
   hitos: { name: string; count: number; hours: number }[];
 };
 type Plan = {
-  project: { startDate: string | null; plannedEndAt: string | null; sprintLengthDays: number; createdAt: string };
+  project: { startDate: string | null; plannedEndAt: string | null; sprintWeeks: number; createdAt: string };
   sprints: PlanSprint[];
   unplanned: number;
 };
@@ -46,13 +46,13 @@ export function PlanSprintsView({ projectId, canPlan }: { projectId: string; can
   const [plan, setPlan] = useState<Plan | null>(null);
   const [busy, setBusy] = useState(false);
   const [startDate, setStartDate] = useState("");
-  const [len, setLen] = useState("10");
+  const [len, setLen] = useState("2");
 
   const load = useCallback(async () => {
     const p = await apiGet<Plan>(`/api/projects/${projectId}/plan`);
     setPlan(p);
     setStartDate(toInput(p.project.startDate ?? p.project.createdAt));
-    setLen(String(p.project.sprintLengthDays));
+    setLen(String(p.project.sprintWeeks));
   }, [projectId]);
 
   useEffect(() => {
@@ -64,7 +64,7 @@ export function PlanSprintsView({ projectId, canPlan }: { projectId: string; can
     try {
       await apiSend(`/api/projects/${projectId}`, "PATCH", {
         startDate: startDate || null,
-        sprintLengthDays: Number(len) || 10,
+        sprintWeeks: Number(len) || 2,
       });
       await apiSend("/api/planning/replan", "POST", { projectId });
       await load();
@@ -101,11 +101,11 @@ export function PlanSprintsView({ projectId, canPlan }: { projectId: string; can
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] text-muted">Sprint (días hábiles)</label>
+                <label className="mb-1 block text-[11px] text-muted">Sprint (semanas, lun→dom)</label>
                 <input
                   type="number"
                   min={1}
-                  max={60}
+                  max={12}
                   value={len}
                   onChange={(e) => setLen(e.target.value)}
                   className="w-24 rounded-lg border border-border-strong bg-background px-2 py-1.5 text-sm"

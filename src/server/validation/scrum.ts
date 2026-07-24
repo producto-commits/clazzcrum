@@ -31,7 +31,7 @@ export const projectCreateSchema = z.object({
   startDate: z.coerce.date().optional().nullable(),
   estimatedEnd: z.coerce.date().optional().nullable(),
   actualEnd: z.coerce.date().optional().nullable(),
-  sprintLengthDays: z.coerce.number().int().min(1).max(60).optional(),
+  sprintWeeks: z.coerce.number().int().min(1).max(12).optional(),
 });
 export const projectUpdateSchema = projectCreateSchema.partial().omit({ clientId: true });
 

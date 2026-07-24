@@ -14,7 +14,7 @@ export async function GET(_req: Request, { params }: Ctx) {
 
   const project = await prisma.project.findUnique({
     where: { id },
-    select: { id: true, name: true, startDate: true, plannedEndAt: true, sprintLengthDays: true, createdAt: true },
+    select: { id: true, name: true, startDate: true, plannedEndAt: true, sprintWeeks: true, createdAt: true },
   });
   if (!project) return fail("Proyecto no encontrado", 404);
 
