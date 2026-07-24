@@ -47,9 +47,9 @@ export function EpicsModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Épicas" wide>
+    <Modal open={open} onClose={onClose} title="Fases" wide>
       <div className="mb-4 space-y-2">
-        {epics.length === 0 && <p className="text-sm text-muted">Aún no hay épicas.</p>}
+        {epics.length === 0 && <p className="text-sm text-muted">Aún no hay fases.</p>}
         {epics.map((ep) => (
           <div key={ep.id} className="rounded-lg border border-border bg-background p-3 text-sm">
             <div className="flex items-center justify-between">
@@ -57,7 +57,7 @@ export function EpicsModal({
               <span className="text-xs text-muted">{PRIORITY_LABELS[ep.priority] ?? ep.priority}</span>
             </div>
             {ep.description && <div className="mt-1 text-xs text-muted">{ep.description}</div>}
-            <div className="mt-1 text-xs text-muted">{ep._count?.stories ?? 0} historias</div>
+            <div className="mt-1 text-xs text-muted">{ep._count?.stories ?? 0} actividades</div>
           </div>
         ))}
       </div>
@@ -83,7 +83,7 @@ export function EpicsModal({
             </Select>
           </div>
           <Button type="submit" loading={saving}>
-            Crear épica
+            Crear fase
           </Button>
         </form>
       )}

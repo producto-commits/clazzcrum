@@ -30,7 +30,7 @@ export function PortalProjectDetail({ projectId }: { projectId: string }) {
           ← Mis proyectos
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-        <p className="text-sm text-muted">Avance del proyecto y de sus sprints</p>
+        <p className="text-sm text-muted">Avance del proyecto y de sus hitos</p>
       </div>
 
       <ProjectStructure

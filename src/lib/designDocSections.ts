@@ -62,7 +62,7 @@ export const DESIGN_SECTIONS: DesignSection[] = [
   {
     key: "cronograma",
     title: "9. Cronograma estimado",
-    help: "Fases o sprints estimados con fechas.",
+    help: "Fases o hitos estimados con fechas.",
     placeholder: "- Fase 1 (fechas): …\n- Fase 2 (fechas): …",
   },
   {

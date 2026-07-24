@@ -73,7 +73,7 @@ export default function DashboardPage() {
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             <StatCard label="Proyectos activos" value={ov.projects.active} sub={`${ov.projects.total} en total`} />
-            <StatCard label="Historias en curso" value={ov.stories.inProgress} sub={`${ov.stories.total} en total`} />
+            <StatCard label="Actividades en curso" value={ov.stories.inProgress} sub={`${ov.stories.total} en total`} />
             <StatCard label="Casos abiertos" value={ov.serviceDesk.open} sub={`${ov.serviceDesk.total} en total`} />
             <StatCard
               label="Cumplimiento SLA"
@@ -85,9 +85,9 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section className="rounded-2xl border border-border bg-surface p-5">
-              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">Historias por estado</h2>
+              <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted">Actividades por estado</h2>
               {ov.stories.total === 0 ? (
-                <p className="text-sm text-muted">Aún no hay historias.</p>
+                <p className="text-sm text-muted">Aún no hay actividades.</p>
               ) : (
                 <StatusBars data={storyBars} />
               )}

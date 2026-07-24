@@ -98,7 +98,7 @@ export default function ProjectsPage() {
           title="Aún no hay proyectos"
           description={
             canCreate
-              ? "Crea tu primer proyecto para empezar a planear historias y sprints."
+              ? "Crea tu primer proyecto para empezar a planear actividades e hitos."
               : "Cuando te asignen un proyecto, aparecerá aquí."
           }
           action={
@@ -125,8 +125,8 @@ export default function ProjectsPage() {
               </div>
               <div className="mt-1 text-sm text-muted">{p.client.name}</div>
               <div className="mt-3 flex gap-2 text-xs text-muted">
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} historias</span>
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} sprints</span>
+                <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} actividades</span>
+                <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} hitos</span>
               </div>
             </Link>
           ))}

@@ -165,7 +165,7 @@ export function ProjectStructure({
     onChanged();
   }
   async function delEpic(id: string, title: string) {
-    if (!confirm(`¿Eliminar la épica “${title}”? Sus historias quedarán sin épica (no se borran).`)) return;
+    if (!confirm(`¿Eliminar la fase “${title}”? Sus actividades quedarán sin fase (no se borran).`)) return;
     await apiSend(`/api/epics/${id}`, "DELETE");
     await load();
     onChanged();
@@ -180,7 +180,7 @@ export function ProjectStructure({
       {canPlan && (
         <div className="flex justify-end">
           <Button onClick={onAddSprint} className="w-auto px-4">
-            + Nuevo sprint
+            + Nuevo hito
           </Button>
         </div>
       )}
@@ -188,8 +188,8 @@ export function ProjectStructure({
       {isEmpty && (
         <div className="rounded-2xl border border-dashed border-border-strong bg-surface/50 p-10 text-center text-sm text-muted">
           {clientView
-            ? "Aún no hay avances para mostrar. En cuanto el equipo planifique el trabajo, verás aquí el progreso del proyecto y de cada sprint."
-            : (<>Organiza el proyecto en <strong>Sprints ▸ Épicas ▸ Historias</strong>. Empieza creando un sprint.</>)}
+            ? "Aún no hay avances para mostrar. En cuanto el equipo planifique el trabajo, verás aquí el progreso del proyecto y de cada hito."
+            : (<>Organiza el proyecto en <strong>Hitos ▸ Fases ▸ Actividades</strong>. Empieza creando un hito.</>)}
         </div>
       )}
 
@@ -208,7 +208,7 @@ export function ProjectStructure({
               <span className="text-sm font-semibold text-brand">{p.pct}%</span>
             </div>
             <Progress pct={p.pct} className="h-2" />
-            <p className="mt-1.5 text-xs text-muted">{p.done} de {p.total} historias completadas</p>
+            <p className="mt-1.5 text-xs text-muted">{p.done} de {p.total} actividades completadas</p>
           </div>
         );
       })()}
@@ -220,7 +220,7 @@ export function ProjectStructure({
         return (
           <section key={sp.id} className="overflow-hidden rounded-2xl border border-border bg-surface">
             <header className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-2 px-4 py-3">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-xs font-bold text-brand-fg">SP</span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-xs font-bold text-brand-fg">H</span>
               <div className="min-w-0">
                 <div className="font-semibold">{sp.name}</div>
                 <div className="text-xs text-muted">
@@ -240,7 +240,7 @@ export function ProjectStructure({
 
             {!clientView && (
             <div className="space-y-3 p-3">
-              {sp.epics.length === 0 && <p className="px-1 text-xs text-muted">Sin épicas en este sprint.</p>}
+              {sp.epics.length === 0 && <p className="px-1 text-xs text-muted">Sin fases en este hito.</p>}
               {sp.epics.map((e) => (
                 <div key={e.id} className="rounded-xl border border-border bg-background/40">
                   <div className="flex items-center gap-2 px-3 py-2">
@@ -255,7 +255,7 @@ export function ProjectStructure({
                       {canDeleteEpic && (
                         <button
                           onClick={() => delEpic(e.id, e.title)}
-                          title="Eliminar épica"
+                          title="Eliminar fase"
                           className="rounded p-1 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                         >
                           🗑
@@ -267,11 +267,11 @@ export function ProjectStructure({
                     {e.stories.map((s) => (
                       <StoryRow key={s.id} s={s} onOpen={() => onOpenStory(s.id)} />
                     ))}
-                    {canEdit && <InlineAdd placeholder="Historia" onAdd={(v) => addStory(e.id, v)} />}
+                    {canEdit && <InlineAdd placeholder="Actividad" onAdd={(v) => addStory(e.id, v)} />}
                   </div>
                 </div>
               ))}
-              {canPlan && <InlineAdd placeholder="Épica" onAdd={(v) => addEpic(sp.id, v)} />}
+              {canPlan && <InlineAdd placeholder="Fase" onAdd={(v) => addEpic(sp.id, v)} />}
             </div>
             )}
           </section>
@@ -282,7 +282,7 @@ export function ProjectStructure({
       {!clientView && (data.looseEpics.length > 0 || data.looseStories.length > 0) && (
         <section className="overflow-hidden rounded-2xl border border-dashed border-border-strong bg-surface">
           <header className="border-b border-border bg-surface-2 px-4 py-3 text-sm font-semibold text-muted">
-            Sin sprint asignado
+            Sin hito asignado
           </header>
           <div className="space-y-3 p-3">
             {data.looseEpics.map((e) => (
@@ -290,11 +290,11 @@ export function ProjectStructure({
                 <div className="flex items-center gap-2 px-3 py-2">
                   <span aria-hidden>📦</span>
                   <span className="font-medium">{e.title}</span>
-                  <span className="ml-auto text-xs text-muted">{e.stories.length} historias</span>
+                  <span className="ml-auto text-xs text-muted">{e.stories.length} actividades</span>
                   {canDeleteEpic && (
                     <button
                       onClick={() => delEpic(e.id, e.title)}
-                      title="Eliminar épica"
+                      title="Eliminar fase"
                       className="rounded p-1 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                     >
                       🗑

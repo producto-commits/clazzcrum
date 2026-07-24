@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             con el cliente al tanto en cada paso.
           </p>
           <ul className="mt-8 space-y-2.5 text-sm text-white/85">
-            {["Tablero Kanban y sprints", "Mesa de servicio con SLA", "Documentos de diseño y métricas"].map((f) => (
+            {["Tablero Kanban e hitos", "Mesa de servicio con SLA", "Documentos de diseño y métricas"].map((f) => (
               <li key={f} className="flex items-center gap-2.5">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/20">
                   <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6.5l2.5 2.5 4.5-5" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>

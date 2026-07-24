@@ -51,7 +51,7 @@ export function VelocityChart({
 }: {
   data: { name: string; committed: number; completed: number }[];
 }) {
-  if (data.length === 0) return <p className="text-sm text-muted">Sin sprints todavía.</p>;
+  if (data.length === 0) return <p className="text-sm text-muted">Sin hitos todavía.</p>;
   const max = Math.max(1, ...data.map((d) => Math.max(d.committed, d.completed)));
   const W = Math.max(280, data.length * 80);
   const H = 160;

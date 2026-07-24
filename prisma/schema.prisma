@@ -48,6 +48,7 @@ model User {
   ticketMessages     TicketMessage[]
   uploadedFiles      Attachment[]
   designDocComments  DesignDocComment[]
+  ticketWorkLogs     TicketWorkLog[]
 
   @@index([email])
 }
@@ -416,6 +417,7 @@ model Ticket {
   firstResponseDueAt DateTime?
   resolutionDueAt    DateTime?
   firstRespondedAt   DateTime?
+  inProgressAt       DateTime? // cuándo empezó la ejecución (primer paso a EN PROCESO)
   resolvedAt         DateTime?
   closedAt           DateTime?
 
@@ -429,10 +431,28 @@ model Ticket {
   updatedAt DateTime @updatedAt
 
   messages TicketMessage[]
+  workLogs TicketWorkLog[]
 
   @@index([clientId])
   @@index([assigneeId])
   @@index([status])
+}
+
+// Registro de tiempo de ejecución de un ticket por el desarrollador
+// responsable (inicio EN PROCESO -> RESUELTO). Se acumula para reportes.
+model TicketWorkLog {
+  id              String   @id @default(cuid())
+  ticketId        String
+  ticket          Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId          String? // desarrollador responsable
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  startedAt       DateTime
+  endedAt         DateTime
+  durationSeconds Int // tiempo de ejecución
+  createdAt       DateTime @default(now())
+
+  @@index([ticketId])
+  @@index([userId])
 }
 
 enum MessageVisibility {

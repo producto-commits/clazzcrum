@@ -61,7 +61,7 @@ export function NewStoryModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Nueva historia de usuario">
+    <Modal open={open} onClose={onClose} title="Nueva actividad">
       {error && <Alert kind="error">{error}</Alert>}
       <form onSubmit={create} className="space-y-3">
         <div>
@@ -117,9 +117,9 @@ export function NewStoryModal({
             />
           </div>
           <div>
-            <Label htmlFor="epic">Épica</Label>
+            <Label htmlFor="epic">Fase</Label>
             <Select id="epic" value={form.epicId} onChange={(e) => setForm({ ...form, epicId: e.target.value })}>
-              <option value="">— sin épica —</option>
+              <option value="">— sin fase —</option>
               {epics.map((ep) => (
                 <option key={ep.id} value={ep.id}>
                   {ep.title}
@@ -128,7 +128,7 @@ export function NewStoryModal({
             </Select>
           </div>
           <div>
-            <Label htmlFor="sprint">Sprint</Label>
+            <Label htmlFor="sprint">Hito</Label>
             <Select id="sprint" value={form.sprintId} onChange={(e) => setForm({ ...form, sprintId: e.target.value })}>
               <option value="">— backlog —</option>
               {sprints.map((sp) => (
@@ -140,7 +140,7 @@ export function NewStoryModal({
           </div>
         </div>
         <Button type="submit" loading={saving}>
-          Crear historia
+          Crear actividad
         </Button>
       </form>
     </Modal>

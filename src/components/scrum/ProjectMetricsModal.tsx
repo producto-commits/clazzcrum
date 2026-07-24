@@ -59,7 +59,7 @@ export function ProjectMetricsModal({
       ) : (
         <div className="space-y-6">
           <section>
-            <h4 className="mb-2 text-sm font-semibold">Esfuerzo por sprint (horas)</h4>
+            <h4 className="mb-2 text-sm font-semibold">Esfuerzo por hito (horas)</h4>
             <VelocityChart data={m.velocity} />
           </section>
 
@@ -83,12 +83,12 @@ export function ProjectMetricsModal({
             {m.burndown ? (
               <BurndownChart days={m.burndown.days} />
             ) : (
-              <p className="text-sm text-muted">Crea un sprint para ver el burndown.</p>
+              <p className="text-sm text-muted">Crea un hito para ver el burndown.</p>
             )}
           </section>
 
           <section>
-            <h4 className="mb-2 text-sm font-semibold">Historias por estado</h4>
+            <h4 className="mb-2 text-sm font-semibold">Actividades por estado</h4>
             <StatusBars data={statusData} />
           </section>
         </div>

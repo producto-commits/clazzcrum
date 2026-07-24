@@ -82,9 +82,9 @@ export function CompleteStoryModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Completar historia">
+    <Modal open={open} onClose={onClose} title="Completar actividad">
       <p className="mb-4 text-sm text-muted">
-        Para marcar {storyTitle ? <span className="font-medium text-foreground">“{storyTitle}”</span> : "esta historia"} como
+        Para marcar {storyTitle ? <span className="font-medium text-foreground">“{storyTitle}”</span> : "esta actividad"} como
         completada, registra la evidencia del trabajo realizado.
       </p>
       {error && <Alert kind="error">{error}</Alert>}

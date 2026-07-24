@@ -241,7 +241,7 @@ export function StoryPanel({
                 disabled={!canEdit}
                 value={d.description ?? ""}
                 onChange={(e) => set("description", e.target.value)}
-                placeholder="Detalle de la historia, contexto, notas técnicas…"
+                placeholder="Detalle de la actividad, contexto, notas técnicas…"
               />
             </div>
 
@@ -268,9 +268,9 @@ export function StoryPanel({
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted">Épica</label>
+                <label className="mb-1 block text-xs text-muted">Fase</label>
                 <Select disabled={!canEdit} value={d.epicId ?? ""} onChange={(e) => set("epicId", e.target.value || null)}>
-                  <option value="">— sin épica —</option>
+                  <option value="">— sin fase —</option>
                   {epics.map((ep) => (
                     <option key={ep.id} value={ep.id}>
                       {ep.title}
@@ -279,7 +279,7 @@ export function StoryPanel({
                 </Select>
               </div>
               <div>
-                <label className="mb-1 block text-xs text-muted">Sprint</label>
+                <label className="mb-1 block text-xs text-muted">Hito</label>
                 <Select disabled={!canEdit} value={d.sprintId ?? ""} onChange={(e) => set("sprintId", e.target.value || null)}>
                   <option value="">— backlog —</option>
                   {sprints.map((sp) => (
@@ -505,8 +505,8 @@ export function StoryPanel({
               <section className="mt-2 rounded-xl border border-danger/30 bg-danger/5 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-sm font-semibold text-danger">Eliminar historia</h4>
-                    <p className="text-xs text-muted">Se borra la historia y todo su contenido. No se puede deshacer.</p>
+                    <h4 className="text-sm font-semibold text-danger">Eliminar actividad</h4>
+                    <p className="text-xs text-muted">Se borra la actividad y todo su contenido. No se puede deshacer.</p>
                   </div>
                   <button
                     onClick={deleteStory}

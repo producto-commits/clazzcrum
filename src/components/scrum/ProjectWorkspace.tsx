@@ -151,11 +151,11 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               Métricas
             </Button>
             <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenSprints(true)}>
-              Sprints ({project.sprints.length})
+              Hitos ({project.sprints.length})
             </Button>
             {canCreateStory && (
               <Button className="w-auto px-4" onClick={() => setOpenNew(true)}>
-                + Historia
+                + Actividad
               </Button>
             )}
           </div>
@@ -207,8 +207,8 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
               className="rounded-lg border border-border-strong bg-background px-3 py-1.5 text-sm"
             />
             <Select value={filters.sprintId} onChange={(e) => setFilters({ ...filters, sprintId: e.target.value })} className="w-auto">
-              <option value="">Todos los sprints</option>
-              <option value="none">Sin sprint</option>
+              <option value="">Todos los hitos</option>
+              <option value="none">Sin hito</option>
               {project.sprints.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}

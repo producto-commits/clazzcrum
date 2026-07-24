@@ -36,7 +36,11 @@ export async function POST(req: Request, { params }: Ctx) {
   const upd: Prisma.TicketUpdateInput = {};
   if (scope.isStaff && visibility === "PUBLIC") {
     if (!ticket.firstRespondedAt) upd.firstRespondedAt = new Date();
-    if (ticket.status === "NEW" || ticket.status === "ASSIGNED") upd.status = "IN_PROGRESS";
+    if (ticket.status === "NEW" || ticket.status === "ASSIGNED") {
+      upd.status = "IN_PROGRESS";
+      // Marca el inicio de la ejecución para el registro de tiempo.
+      if (!ticket.inProgressAt) upd.inProgressAt = new Date();
+    }
   } else if (!scope.isStaff) {
     // El cliente respondió: reabrir si estaba resuelto, o reactivar si esperaba su respuesta.
     if (ticket.status === "RESOLVED") upd.status = "REOPENED";

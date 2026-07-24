@@ -39,12 +39,12 @@ export async function POST(req: Request) {
   });
   let maxN = 0;
   for (const s of existing) {
-    const m = s.name.match(/SP-(\d+)/i);
+    const m = s.name.match(/(?:SP|H)-(\d+)/i);
     if (m) maxN = Math.max(maxN, parseInt(m[1], 10));
   }
-  const code = `SP-${String(maxN + 1).padStart(2, "0")}`;
+  const code = `H-${String(maxN + 1).padStart(2, "0")}`;
   // Quita cualquier prefijo "SP-XX ·" que el usuario haya escrito por costumbre.
-  const cleanName = parsed.data.name.replace(/^\s*SP-\d+\s*[·:.-]?\s*/i, "").trim();
+  const cleanName = parsed.data.name.replace(/^\s*(?:SP|H)-\d+\s*[·:.-]?\s*/i, "").trim();
   const name = cleanName ? `${code} · ${cleanName}` : code;
 
   const sprint = await prisma.sprint.create({ data: { ...parsed.data, name } });

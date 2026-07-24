@@ -28,6 +28,10 @@ export async function GET(_req: Request, { params }: Ctx) {
         orderBy: { createdAt: "asc" },
         include: { user: { select: { id: true, name: true } } },
       },
+      workLogs: {
+        orderBy: { createdAt: "desc" },
+        include: { user: { select: { id: true, name: true } } },
+      },
     },
   });
   if (!ticket) return fail("Caso no encontrado", 404);
@@ -37,6 +41,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   if (!scope.isStaff) {
     if (scope.clientId !== ticket.clientId) return fail("Caso no encontrado", 404);
     ticket.messages = ticket.messages.filter((m) => m.visibility === "PUBLIC");
+    ticket.workLogs = []; // el tiempo de ejecución es interno del equipo
   }
   return ok(ticket);
 }
@@ -72,10 +77,18 @@ export async function PATCH(req: Request, { params }: Ctx) {
       data.resolutionDueAt = sla.resolutionDueAt;
     }
   }
+  // Momento en que se resuelve, para registrar el tiempo de ejecución.
+  const resolvedNow = new Date();
+  let logExecution = false;
   if (p.status) {
     data.status = p.status;
-    if (p.status === "RESOLVED") data.resolvedAt = new Date();
-    if (p.status === "CLOSED") data.closedAt = new Date();
+    // Primer paso a EN PROCESO marca el inicio de la ejecución.
+    if (p.status === "IN_PROGRESS" && !current.inProgressAt) data.inProgressAt = resolvedNow;
+    if (p.status === "RESOLVED") {
+      data.resolvedAt = resolvedNow;
+      if (current.status !== "RESOLVED") logExecution = true; // evita duplicar en re-guardados
+    }
+    if (p.status === "CLOSED") data.closedAt = resolvedNow;
     if (p.status === "REOPENED") {
       data.resolvedAt = null;
       data.closedAt = null;
@@ -83,6 +96,22 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 
   const ticket = await prisma.ticket.update({ where: { id }, data });
+
+  // Registrar el tiempo de ejecución en la tabla de trabajo (para reportes).
+  if (logExecution) {
+    const startedAt = current.inProgressAt ?? current.firstRespondedAt ?? current.createdAt;
+    const durationSeconds = Math.max(0, Math.round((resolvedNow.getTime() - new Date(startedAt).getTime()) / 1000));
+    await prisma.ticketWorkLog.create({
+      data: {
+        ticketId: id,
+        // El desarrollador responsable (asignado); si no hay, quien resuelve.
+        userId: current.assigneeId ?? auth.session.userId,
+        startedAt,
+        endedAt: resolvedNow,
+        durationSeconds,
+      },
+    });
+  }
   await writeAudit({
     userId: auth.session.userId,
     action: p.status ? "status_change" : "update",

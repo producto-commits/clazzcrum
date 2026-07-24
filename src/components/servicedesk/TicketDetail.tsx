@@ -35,7 +35,17 @@ type Detail = {
   category: { id: string; name: string } | null;
   linkedStory: { id: string; title: string; projectId: string } | null;
   messages: Msg[];
+  workLogs?: { id: string; durationSeconds: number; startedAt: string; endedAt: string; user: { id: string; name: string } | null }[];
 };
+
+// Formatea segundos como "2h 15m" / "45m" / "30s".
+function fmtDur(seconds: number): string {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m`;
+  return `${seconds}s`;
+}
 type UserOpt = { id: string; name: string };
 type ProjectOpt = { id: string; name: string };
 
@@ -222,6 +232,24 @@ export function TicketDetail({
           <SlaBadge label="Resolución" due={d.resolutionDueAt} done={d.resolvedAt} />
         </div>
 
+        {/* Tiempo de ejecución registrado (solo staff) */}
+        {isStaff && d.workLogs && d.workLogs.length > 0 && (
+          <div className="rounded-2xl border border-border bg-surface p-4">
+            <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Tiempo de ejecución</h2>
+            <div className="mb-2 text-2xl font-semibold text-brand">
+              {fmtDur(d.workLogs.reduce((s, w) => s + w.durationSeconds, 0))}
+            </div>
+            <ul className="space-y-1 text-xs text-muted">
+              {d.workLogs.map((w) => (
+                <li key={w.id} className="flex items-center justify-between gap-2">
+                  <span className="truncate">{w.user?.name ?? "—"}</span>
+                  <span className="font-mono">{fmtDur(w.durationSeconds)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* Gestión (staff) */}
         {canEdit && (
           <div className="space-y-3 rounded-2xl border border-border bg-surface p-4">
@@ -259,7 +287,7 @@ export function TicketDetail({
 
             {d.linkedStory ? (
               <div className="rounded-lg border border-border bg-background p-2 text-xs">
-                Vinculado a historia:{" "}
+                Vinculado a actividad:{" "}
                 <Link href={`/projects/${d.linkedStory.projectId}`} className="text-brand hover:underline">
                   {d.linkedStory.title}
                 </Link>
@@ -298,7 +326,7 @@ export function TicketDetail({
         )}
       </div>
 
-      <Modal open={convertOpen} onClose={() => setConvertOpen(false)} title="Convertir en historia">
+      <Modal open={convertOpen} onClose={() => setConvertOpen(false)} title="Convertir en actividad">
         <p className="mb-3 text-sm text-muted">
           Se creará una historia en el proyecto elegido, vinculada a este caso.
         </p>

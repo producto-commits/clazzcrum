@@ -53,9 +53,9 @@ export function SprintsModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Sprints" wide>
+    <Modal open={open} onClose={onClose} title="Hitos" wide>
       <div className="mb-4 space-y-2">
-        {sprints.length === 0 && <p className="text-sm text-muted">Aún no hay sprints.</p>}
+        {sprints.length === 0 && <p className="text-sm text-muted">Aún no hay hitos.</p>}
         {sprints.map((s) => (
           <div key={s.id} className="rounded-lg border border-border bg-background p-3 text-sm">
             <div className="flex items-center justify-between">
@@ -66,7 +66,7 @@ export function SprintsModal({
             </div>
             {s.goal && <div className="mt-1 text-xs text-muted">{s.goal}</div>}
             <div className="mt-1 text-xs text-muted">
-              {s._count?.stories ?? 0} historias {s.capacity != null && `· capacidad ${s.capacity} pts`}
+              {s._count?.stories ?? 0} actividades {s.capacity != null && `· capacidad ${s.capacity} pts`}
             </div>
           </div>
         ))}
@@ -85,7 +85,7 @@ export function SprintsModal({
               onChange={(e) => setForm({ ...form, name: e.target.value })}
             />
             <p className="mt-1 text-xs text-muted">
-              El código (SP-01, SP-02…) se asigna automáticamente. Solo escribe el nombre.
+              El código (H-01, H-02…) se asigna automáticamente. Solo escribe el nombre.
             </p>
           </div>
           <div>
@@ -107,7 +107,7 @@ export function SprintsModal({
             </div>
           </div>
           <Button type="submit" loading={saving}>
-            Crear sprint
+            Crear hito
           </Button>
         </form>
       )}

@@ -37,7 +37,7 @@ export function PortalProjects() {
       <div className="mb-1 flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">Mis proyectos</h1>
       </div>
-      <p className="mb-6 text-sm text-muted">Consulta el avance de cada proyecto y de sus sprints.</p>
+      <p className="mb-6 text-sm text-muted">Consulta el avance de cada proyecto y de sus hitos.</p>
 
       {loading ? (
         <SkeletonCards />
@@ -61,8 +61,8 @@ export function PortalProjects() {
                 </span>
               </div>
               <div className="mt-3 flex gap-2 text-xs text-muted">
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} sprints</span>
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} historias</span>
+                <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} hitos</span>
+                <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} actividades</span>
               </div>
               <div className="mt-3 text-sm font-medium text-brand">Ver avance →</div>
             </Link>
