@@ -6,6 +6,7 @@ import { hashPassword } from "@/server/auth/password";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { adminUserUpdateSchema } from "@/server/validation/admin";
 import { writeAudit } from "@/server/audit";
+import { replanForUser } from "@/server/services/planning";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -16,12 +17,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const parsed = await parseBody(req, adminUserUpdateSchema);
   if (parsed instanceof NextResponse) return parsed;
-  const { name, email, jobTitle, roleKey, isActive, password, projectIds } = parsed.data;
+  const { name, email, jobTitle, roleKey, isActive, password, projectIds, dailyHours, weeklyHours, assignments } = parsed.data;
 
   const data: Prisma.UserUpdateInput = {};
   if (name !== undefined) data.name = name;
   if (jobTitle !== undefined) data.jobTitle = jobTitle || null;
   if (isActive !== undefined) data.isActive = isActive;
+  if (dailyHours !== undefined) data.dailyHours = dailyHours;
+  if (weeklyHours !== undefined) data.weeklyHours = weeklyHours;
   if (password) data.passwordHash = await hashPassword(password);
   if (email !== undefined) {
     const clash = await prisma.user.findFirst({ where: { email, id: { not: id } } });
@@ -52,6 +55,24 @@ export async function PATCH(req: Request, { params }: Ctx) {
     }
   }
 
+  // Dedicación por proyecto (motor de planificación): reemplaza el conjunto.
+  if (assignments) {
+    const total = assignments.reduce((s, a) => s + a.dedicationPct, 0);
+    if (total > 100) return fail(`La dedicación suma ${total}%; el máximo es 100%`, 422);
+    await prisma.projectAssignment.deleteMany({ where: { userId: id } });
+    if (assignments.length) {
+      await prisma.projectAssignment.createMany({
+        data: assignments.map((a) => ({
+          userId: id,
+          projectId: a.projectId,
+          dedicationPct: a.dedicationPct,
+          priority: a.priority ?? 1,
+        })),
+        skipDuplicates: true,
+      });
+    }
+  }
+
   await writeAudit({
     userId: auth.session.userId,
     action: "update",
@@ -59,5 +80,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     resourceId: id,
     ip: clientIp(req),
   });
+  // La capacidad o dedicación cambió → recalcular cronogramas del desarrollador.
+  if (assignments || dailyHours !== undefined) await replanForUser(id);
   return ok({ ok: true });
 }

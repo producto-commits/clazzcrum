@@ -21,6 +21,8 @@ model User {
   passwordHash    String
   name            String
   jobTitle        String? // cargo dentro del equipo
+  dailyHours      Float     @default(8) // capacidad de trabajo (horas por día)
+  weeklyHours     Float? // horas laborales por semana (informativo)
   isActive        Boolean   @default(true)
   emailVerifiedAt DateTime?
   createdAt       DateTime  @default(now())
@@ -49,6 +51,8 @@ model User {
   uploadedFiles      Attachment[]
   designDocComments  DesignDocComment[]
   ticketWorkLogs     TicketWorkLog[]
+  assignments        ProjectAssignment[]
+  capacityEvents     CapacityEvent[]
 
   @@index([email])
 }
@@ -175,6 +179,9 @@ model Project {
   startDate     DateTime?
   estimatedEnd  DateTime?
   actualEnd     DateTime?
+  // Motor de planificación
+  sprintLengthDays Int       @default(10) // duración del sprint en días hábiles
+  plannedEndAt     DateTime? // fin del proyecto calculado por el motor
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -183,8 +190,63 @@ model Project {
   sprints     Sprint[]
   designDocs  DesignDoc[]
   viewers     UserProjectAccess[]
+  assignments ProjectAssignment[]
+  planSprints PlanSprint[]
 
   @@index([clientId])
+}
+
+// ============================================================
+//  MOTOR DE PLANIFICACIÓN (ver PLANIFICADOR.md)
+// ============================================================
+
+// Dedicación de un desarrollador a un proyecto (la suma por dev debe ser 100%).
+model ProjectAssignment {
+  id            String  @id @default(cuid())
+  userId        String
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId     String
+  project       Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  dedicationPct Int // 0-100
+  priority      Int     @default(1) // 1 = más prioritario
+
+  @@unique([userId, projectId])
+  @@index([projectId])
+}
+
+// Sprint AUTOGENERADO por el motor (Sprint 1, 2, 3…). No se crea a mano.
+model PlanSprint {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  index     Int // 1, 2, 3…
+  startDate DateTime
+  endDate   DateTime
+  stories   UserStory[]
+
+  @@unique([projectId, index])
+}
+
+// Evento que resta capacidad del día a un desarrollador
+// (reunión, ticket, incidente, actividad operativa).
+model CapacityEvent {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime // día afectado
+  hours  Float // horas consumidas
+  source String // meeting | ticket | incident | other
+  refId  String? // p. ej. id del ticket
+  note   String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+}
+
+// Festivos de Colombia (cache de la API pública).
+model Holiday {
+  date DateTime @unique
+  name String
 }
 
 // Acceso de un usuario-cliente a un proyecto específico.
@@ -269,6 +331,10 @@ model UserStory {
   estimatedEnd DateTime?
   actualEnd    DateTime?
   completionEvidence String? // descripción de la evidencia al completar
+
+  // Sprint autogenerado por el motor de planificación.
+  planSprintId String?
+  planSprint   PlanSprint? @relation(fields: [planSprintId], references: [id], onDelete: SetNull)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

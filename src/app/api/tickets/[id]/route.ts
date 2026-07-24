@@ -7,6 +7,7 @@ import { computeSlaDueDates } from "@/server/services/tickets";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { ticketUpdateSchema } from "@/server/validation/servicedesk";
 import { writeAudit } from "@/server/audit";
+import { replanForUser } from "@/server/services/planning";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -101,16 +102,23 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (logExecution) {
     const startedAt = current.inProgressAt ?? current.firstRespondedAt ?? current.createdAt;
     const durationSeconds = Math.max(0, Math.round((resolvedNow.getTime() - new Date(startedAt).getTime()) / 1000));
+    const devId = current.assigneeId ?? auth.session.userId;
     await prisma.ticketWorkLog.create({
       data: {
         ticketId: id,
         // El desarrollador responsable (asignado); si no hay, quien resuelve.
-        userId: current.assigneeId ?? auth.session.userId,
+        userId: devId,
         startedAt,
         endedAt: resolvedNow,
         durationSeconds,
       },
     });
+    // El tiempo del ticket resta capacidad del día → replanificar sus proyectos.
+    const day = new Date(Date.UTC(resolvedNow.getUTCFullYear(), resolvedNow.getUTCMonth(), resolvedNow.getUTCDate()));
+    await prisma.capacityEvent.create({
+      data: { userId: devId, date: day, hours: durationSeconds / 3600, source: "ticket", refId: id },
+    });
+    await replanForUser(devId);
   }
   await writeAudit({
     userId: auth.session.userId,

@@ -4,6 +4,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { storyUpdateSchema } from "@/server/validation/scrum";
 import { writeAudit } from "@/server/audit";
+import { replanSafe } from "@/server/services/planning";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -110,6 +111,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     metadata: data.status ? { status: data.status } : undefined,
     ip: clientIp(req),
   });
+  await replanSafe(story.projectId); // el motor recalcula el cronograma
   return ok(story);
 }
 
@@ -117,6 +119,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const auth = await requirePermission("delete", "story");
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+  const toDelete = await prisma.userStory.findUnique({ where: { id }, select: { projectId: true } });
   await prisma.userStory.delete({ where: { id } });
   await writeAudit({
     userId: auth.session.userId,
@@ -125,5 +128,6 @@ export async function DELETE(req: Request, { params }: Ctx) {
     resourceId: id,
     ip: clientIp(req),
   });
+  await replanSafe(toDelete?.projectId);
   return ok({ ok: true });
 }

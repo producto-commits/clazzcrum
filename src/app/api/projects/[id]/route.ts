@@ -4,6 +4,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { resolveScope } from "@/server/auth/scope";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { projectUpdateSchema } from "@/server/validation/scrum";
+import { replanSafe } from "@/server/services/planning";
 import { writeAudit } from "@/server/audit";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -42,6 +43,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (parsed instanceof NextResponse) return parsed;
 
   const project = await prisma.project.update({ where: { id }, data: parsed.data });
+  await replanSafe(id); // fechas/duración de sprint afectan el cronograma
   await writeAudit({
     userId: auth.session.userId,
     action: "update",

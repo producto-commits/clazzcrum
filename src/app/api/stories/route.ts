@@ -6,6 +6,7 @@ import { resolveScope } from "@/server/auth/scope";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { storyCreateSchema } from "@/server/validation/scrum";
 import { writeAudit } from "@/server/audit";
+import { replanSafe } from "@/server/services/planning";
 
 const storyInclude = {
   assignees: { include: { user: { select: { id: true, name: true } } } },
@@ -100,5 +101,6 @@ export async function POST(req: Request) {
     resourceId: story.id,
     ip: clientIp(req),
   });
+  await replanSafe(parsed.data.projectId); // el motor recalcula el cronograma
   return ok(story, { status: 201 });
 }

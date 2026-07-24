@@ -15,6 +15,19 @@ export const adminUserUpdateSchema = z.object({
   jobTitle: z.string().trim().max(120).optional().nullable(),
   roleKey: z.enum(["admin", "tech_lead", "developer", "client"]).optional(),
   isActive: z.boolean().optional(),
+  // Motor de planificación: capacidad y dedicación por proyecto.
+  dailyHours: z.coerce.number().min(0.5).max(24).optional(),
+  weeklyHours: z.coerce.number().min(1).max(120).optional().nullable(),
+  assignments: z
+    .array(
+      z.object({
+        projectId: z.string().min(1),
+        dedicationPct: z.coerce.number().int().min(1).max(100),
+        priority: z.coerce.number().int().min(1).max(99).optional(),
+      }),
+    )
+    .max(30)
+    .optional(),
   // Contraseña opcional: solo si se quiere restablecer. Vacío = sin cambio.
   password: z.string().min(8).max(128).optional().or(z.literal("")),
   // Proyectos que el usuario-cliente puede ver (vacío = todos los de su cliente).

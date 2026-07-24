@@ -8,14 +8,18 @@ import { Select } from "@/components/ui/Inputs";
 import { SkeletonRows } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 
+type Asg = { projectId: string; dedicationPct: number; priority: number; project?: { name: string } };
 type Row = {
   id: string;
   name: string;
   email: string;
   jobTitle: string | null;
   isActive: boolean;
+  dailyHours: number;
   roles: { role: { key: string; name: string } }[];
+  assignments: Asg[];
 };
+type ProjectOpt = { id: string; name: string };
 
 const ROLES = [
   { key: "admin", name: "Administrador" },
@@ -47,6 +51,8 @@ type EditForm = {
   roleKey: string;
   isActive: boolean;
   password: string;
+  dailyHours: string;
+  assignments: Asg[];
 };
 
 export default function AdminUsersPage() {
@@ -58,6 +64,7 @@ export default function AdminUsersPage() {
   const [edit, setEdit] = useState<EditForm | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [projects, setProjects] = useState<ProjectOpt[]>([]);
 
   async function load() {
     setLoading(true);
@@ -69,6 +76,7 @@ export default function AdminUsersPage() {
   }
   useEffect(() => {
     load();
+    apiGet<ProjectOpt[]>("/api/projects").then(setProjects).catch(() => setProjects([]));
   }, []);
 
   async function submitCreate(e: React.FormEvent) {
@@ -97,6 +105,8 @@ export default function AdminUsersPage() {
       roleKey: u.roles[0]?.role.key ?? "developer",
       isActive: u.isActive,
       password: "",
+      dailyHours: String(u.dailyHours ?? 8),
+      assignments: (u.assignments ?? []).map((a) => ({ ...a })),
     });
   }
 
@@ -112,6 +122,12 @@ export default function AdminUsersPage() {
         jobTitle: edit.jobTitle,
         roleKey: edit.roleKey,
         isActive: edit.isActive,
+        dailyHours: Number(edit.dailyHours) || 8,
+        assignments: edit.assignments.map((a) => ({
+          projectId: a.projectId,
+          dedicationPct: a.dedicationPct,
+          priority: a.priority,
+        })),
         ...(edit.password ? { password: edit.password } : {}),
       });
       setEditing(null);
@@ -254,6 +270,52 @@ export default function AdminUsersPage() {
             <div>
               <Label htmlFor="ep">Nueva contraseña</Label>
               <Input id="ep" type="text" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} placeholder="Dejar vacío para no cambiar" />
+            </div>
+            {/* Motor de planificación: capacidad y dedicación por proyecto */}
+            <div className="space-y-2 rounded-xl border border-border bg-background p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold">Planificación</span>
+                <span className={`text-xs ${edit.assignments.reduce((t, a) => t + a.dedicationPct, 0) > 100 ? "text-danger" : "text-muted"}`}>
+                  Dedicación total: {edit.assignments.reduce((t, a) => t + a.dedicationPct, 0)}%
+                </span>
+              </div>
+              <div>
+                <Label htmlFor="edh">Horas de trabajo diarias</Label>
+                <Input id="edh" type="number" min="1" max="24" step="0.5" value={edit.dailyHours} onChange={(e) => setEdit({ ...edit, dailyHours: e.target.value })} />
+              </div>
+              <div className="space-y-1.5">
+                {edit.assignments.map((a, i) => (
+                  <div key={i} className="flex items-center gap-1.5">
+                    <Select
+                      value={a.projectId}
+                      onChange={(e) => setEdit({ ...edit, assignments: edit.assignments.map((x, j) => (j === i ? { ...x, projectId: e.target.value } : x)) })}
+                      className="flex-1"
+                    >
+                      {projects.map((pr) => (
+                        <option key={pr.id} value={pr.id}>{pr.name}</option>
+                      ))}
+                    </Select>
+                    <Input
+                      type="number" min="1" max="100" value={a.dedicationPct} title="% dedicación"
+                      onChange={(e) => setEdit({ ...edit, assignments: edit.assignments.map((x, j) => (j === i ? { ...x, dedicationPct: Number(e.target.value) } : x)) })}
+                      className="w-20"
+                    />
+                    <Input
+                      type="number" min="1" max="99" value={a.priority} title="Prioridad (1 = mayor)"
+                      onChange={(e) => setEdit({ ...edit, assignments: edit.assignments.map((x, j) => (j === i ? { ...x, priority: Number(e.target.value) } : x)) })}
+                      className="w-16"
+                    />
+                    <button type="button" onClick={() => setEdit({ ...edit, assignments: edit.assignments.filter((_, j) => j !== i) })} className="rounded p-1 text-muted hover:text-danger">✕</button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => projects.length && setEdit({ ...edit, assignments: [...edit.assignments, { projectId: projects[0].id, dedicationPct: 50, priority: 1 }] })}
+                  className="text-xs font-medium text-brand hover:underline"
+                >
+                  + Asignar proyecto (% dedicación · prioridad)
+                </button>
+              </div>
             </div>
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={edit.isActive} onChange={(e) => setEdit({ ...edit, isActive: e.target.checked })} />

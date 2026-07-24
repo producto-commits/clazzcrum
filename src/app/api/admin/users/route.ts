@@ -23,7 +23,17 @@ export async function GET() {
       isActive: true,
       emailVerifiedAt: true,
       createdAt: true,
+      dailyHours: true,
+      weeklyHours: true,
       roles: { include: { role: { select: { key: true, name: true } } } },
+      assignments: {
+        select: {
+          projectId: true,
+          dedicationPct: true,
+          priority: true,
+          project: { select: { name: true } },
+        },
+      },
     },
   });
   return ok(users);

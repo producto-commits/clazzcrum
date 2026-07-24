@@ -13,6 +13,7 @@ import { SprintsModal } from "./SprintsModal";
 import { ProjectMetricsModal } from "./ProjectMetricsModal";
 import { CompleteStoryModal } from "./CompleteStoryModal";
 import { ProjectStructure } from "./ProjectStructure";
+import { PlanSprintsView } from "./PlanSprintsView";
 import { STORY_COLUMNS, type Story, type StoryStatus, type Sprint, type Epic, type UserOpt } from "@/lib/scrumTypes";
 
 // ¿La historia cae/solapa el período elegido? (por sus fechas planeadas)
@@ -57,7 +58,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [users, setUsers] = useState<UserOpt[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [tab, setTab] = useState<"estructura" | "tablero">("estructura");
+  const [tab, setTab] = useState<"estructura" | "sprints" | "tablero">("estructura");
   const [structureKey, setStructureKey] = useState(0);
   const [filters, setFilters] = useState({ sprintId: "", assigneeId: "", priority: "", q: "" });
   const [period, setPeriod] = useState<"" | "day" | "week" | "month">("");
@@ -168,6 +169,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
           {(
             [
               ["estructura", "Estructura"],
+              ["sprints", "Sprints"],
               ["tablero", "Tablero"],
             ] as const
           ).map(([key, label]) => (
@@ -184,7 +186,9 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         </div>
       )}
 
-      {isClient || tab === "estructura" ? (
+      {!isClient && tab === "sprints" ? (
+        <PlanSprintsView projectId={projectId} canPlan={canPlan} />
+      ) : isClient || tab === "estructura" ? (
         <ProjectStructure
           projectId={projectId}
           canEdit={canEditStory}
