@@ -19,6 +19,15 @@ export async function requirePortal(): Promise<{ scope: AccessScope } | NextResp
   return { scope };
 }
 
+// Guarda para funciones internas del EQUIPO (no clientes).
+export async function requireStaff(): Promise<{ scope: AccessScope } | NextResponse> {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  const scope = await resolveScope(session);
+  if (!scope.isStaff) return NextResponse.json({ error: "Solo para el equipo" }, { status: 403 });
+  return { scope };
+}
+
 // ¿El cliente puede ver un proyecto? (por su cliente y, opcionalmente, por
 // la lista de proyectos permitidos).
 export function clientCanSeeProject(

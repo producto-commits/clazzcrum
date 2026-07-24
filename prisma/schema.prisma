@@ -53,6 +53,7 @@ model User {
   ticketWorkLogs     TicketWorkLog[]
   assignments        ProjectAssignment[]
   capacityEvents     CapacityEvent[]
+  meetingAttendance  MeetingAttendee[]
 
   @@index([email])
 }
@@ -247,6 +248,29 @@ model CapacityEvent {
 model Holiday {
   date DateTime @unique
   name String
+}
+
+// Reunión: resta capacidad del día a sus asistentes (alimenta CapacityEvent
+// con source="meeting"). Programarla/borrarla replanifica sus proyectos.
+model Meeting {
+  id        String   @id @default(cuid())
+  title     String
+  date      DateTime // día de la reunión
+  hours     Float // duración en horas
+  note      String?
+  createdAt DateTime @default(now())
+
+  attendees MeetingAttendee[]
+}
+
+model MeetingAttendee {
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([meetingId, userId])
+  @@index([userId])
 }
 
 // Acceso de un usuario-cliente a un proyecto específico.
