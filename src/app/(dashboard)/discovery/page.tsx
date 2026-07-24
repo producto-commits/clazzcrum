@@ -57,7 +57,7 @@ export default function DiscoveryPage() {
     setError(null);
     const ps = await apiGet<ProjectOpt[]>("/api/projects").catch(() => []);
     setProjects(ps);
-    setForm({ projectId: ps[0]?.id ?? "", title: "" });
+    setForm({ projectId: ps[0]?.id ?? "", title: "", kind: "design" });
     setOpen(true);
   }
 
