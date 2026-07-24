@@ -5,60 +5,34 @@
    Neutros cálidos (matiz ciruela) + acento violeta con restraint.
    ============================================================ */
 :root {
-  /* Neutros fríos limpios — modo claro (pareja del verde de marca) */
-  --background: #f1f5f3;
-  --surface: #ffffff;
-  --surface-2: #f6faf8;
-  --border: #e1e8e5;
-  --border-strong: #d0dad6;
-  --foreground: #12201b;
-  --muted: #64716b;
+  /* Paleta oficial Clazz: SIEMPRE oscura (decisión de Diego 2026-07-24).
+     Neutros grafito frío con matiz verde muy tenue. */
+  --background: #0f1513;
+  --surface: #16201b;
+  --surface-2: #1c2823;
+  --border: #26352f;
+  --border-strong: #33443c;
+  --foreground: #e9f1ed;
+  --muted: #91a099;
 
   /* Marca — verde Clazz Digital */
-  --brand: #12a06a;
-  --brand-strong: #0c8a5a;
-  --brand-fg: #ffffff;
-  --brand-soft: #e1f4ec;
+  --brand: #2ec089;
+  --brand-strong: #1fa876;
+  --brand-fg: #06231a;
+  --brand-soft: #14271f;
 
   /* Estados semánticos */
-  --success: #1f9d57;
-  --warning: #c9822a;
-  --danger: #db4436;
-  --info: #2f8fd6;
-  --accent-2: #0ea5a0;
+  --success: #3ec27a;
+  --warning: #e0a141;
+  --danger: #f0574a;
+  --info: #4aa8e6;
+  --accent-2: #34c7bd;
 
   /* Radios y sombras */
   --radius: 14px;
   --radius-sm: 9px;
-  --shadow-sm: 0 1px 2px rgba(16, 32, 27, 0.06), 0 1px 1px rgba(16, 32, 27, 0.04);
-  --shadow-md: 0 10px 30px -12px rgba(16, 32, 27, 0.18);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Neutros grafito frío con matiz verde muy tenue */
-    --background: #0f1513;
-    --surface: #16201b;
-    --surface-2: #1c2823;
-    --border: #26352f;
-    --border-strong: #33443c;
-    --foreground: #e9f1ed;
-    --muted: #91a099;
-
-    --brand: #2ec089;
-    --brand-strong: #1fa876;
-    --brand-fg: #06231a;
-    --brand-soft: #14271f;
-
-    --success: #3ec27a;
-    --warning: #e0a141;
-    --danger: #f0574a;
-    --info: #4aa8e6;
-    --accent-2: #34c7bd;
-
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 18px 40px -16px rgba(0, 0, 0, 0.6);
-  }
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 18px 40px -16px rgba(0, 0, 0, 0.6);
 }
 
 @theme inline {
@@ -93,6 +67,8 @@
 html {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Tema oscuro fijo: también para controles nativos (date pickers, selects). */
+  color-scheme: dark;
 }
 
 body {
