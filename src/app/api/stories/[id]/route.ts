@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
+import type { Prisma } from "@prisma/client";
 import { requirePermission } from "@/server/auth/guard";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { storyUpdateSchema } from "@/server/validation/scrum";
@@ -38,13 +39,14 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const parsed = await parseBody(req, storyUpdateSchema);
   if (parsed instanceof NextResponse) return parsed;
-  const { assigneeIds, ...data } = parsed.data;
+  const { assigneeIds, ...rest } = parsed.data;
+  const data: Prisma.UserStoryUncheckedUpdateInput = { ...rest };
 
   // Jerarquía anidada: al cambiar de épica, la historia hereda el sprint de esa épica.
-  if (data.epicId !== undefined) {
-    if (data.epicId) {
+  if (rest.epicId !== undefined) {
+    if (rest.epicId) {
       const epic = await prisma.epic.findUnique({
-        where: { id: data.epicId },
+        where: { id: rest.epicId },
         select: { sprintId: true },
       });
       data.sprintId = epic?.sprintId ?? null;
@@ -62,7 +64,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
     if (data.status === "DONE" && current?.status !== "DONE") {
       // Evidencia obligatoria: descripción + al menos un adjunto.
-      const evidence = (data.completionEvidence ?? current?.completionEvidence ?? "").trim();
+      const evidence = (rest.completionEvidence ?? current?.completionEvidence ?? "").trim();
       if (!evidence) {
         return fail("Para completar la historia debes describir la evidencia", 422, {
           requiresEvidence: true,
@@ -77,8 +79,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
         });
       }
       // Registrar la fecha real de fin.
-      if (data.actualEnd === undefined && !current?.actualEnd) data.actualEnd = new Date();
-    } else if (data.status !== "DONE" && current?.status === "DONE" && data.actualEnd === undefined) {
+      if (rest.actualEnd === undefined && !current?.actualEnd) data.actualEnd = new Date();
+    } else if (data.status !== "DONE" && current?.status === "DONE" && rest.actualEnd === undefined) {
       data.actualEnd = null;
     }
 
