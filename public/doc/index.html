@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Manual de Clazz — Gestión ágil de proyectos y mesa de servicio</title>
+<title>Manual de Clazz — Guía paso a paso</title>
 <link rel="icon" href="/clazz-logo.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#0f1513; --surface:#16201b; --surface-2:#1c2823;
@@ -15,96 +15,82 @@
     --fg:#e9f1ed; --muted:#91a099;
     --brand:#2ec089; --brand-soft:rgba(46,192,137,.14); --brand-strong:#25a074;
     --danger:#f0656a; --warning:#e0a04a; --info:#4aa3e0;
-    --radius:14px;
-    --nav-w:300px;
+    --radius:14px; --nav-w:310px;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
-  body{
-    background:var(--bg); color:var(--fg);
+  body{background:var(--bg); color:var(--fg);
     font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-    line-height:1.65; font-size:15.5px;
-    -webkit-font-smoothing:antialiased;
-  }
+    line-height:1.65; font-size:15.5px; -webkit-font-smoothing:antialiased}
   h1,h2,h3,h4{font-family:"Space Grotesk",Inter,sans-serif; line-height:1.2; letter-spacing:-.01em}
   a{color:var(--brand); text-decoration:none}
   a:hover{text-decoration:underline}
-  code{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.86em;
-    background:var(--surface-2); border:1px solid var(--border); padding:.08em .4em; border-radius:6px; color:#bfeeda}
+  code{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace; font-size:.84em;
+    background:var(--surface-2); border:1px solid var(--border); padding:.06em .42em; border-radius:6px; color:#bfeeda; white-space:nowrap}
 
-  /* Layout */
   .layout{display:flex; min-height:100vh}
-  /* Sidebar */
-  .side{
-    width:var(--nav-w); flex:0 0 var(--nav-w);
-    background:var(--surface); border-right:1px solid var(--border);
-    position:sticky; top:0; height:100vh; overflow-y:auto; padding:22px 16px 40px;
-  }
-  .brand{display:flex; align-items:center; gap:10px; padding:6px 8px 18px; border-bottom:1px solid var(--border); margin-bottom:14px}
+  .side{width:var(--nav-w); flex:0 0 var(--nav-w); background:var(--surface); border-right:1px solid var(--border);
+    position:sticky; top:0; height:100vh; overflow-y:auto; padding:22px 16px 40px}
+  .brand{display:flex; align-items:center; gap:10px; padding:6px 8px 18px; border-bottom:1px solid var(--border); margin-bottom:10px}
   .brand img{width:34px;height:34px;border-radius:50%}
   .brand .n{font-family:"Space Grotesk";font-weight:700;font-size:18px;line-height:1}
   .brand .s{font-size:10px;letter-spacing:.22em;color:var(--muted);font-weight:600}
   .navgroup{margin:16px 6px 6px; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
-  .navlink{
-    display:flex; align-items:center; gap:9px; width:100%; text-align:left;
-    padding:8px 12px; border-radius:10px; color:var(--muted); font-size:14px; font-weight:500;
-    background:none; border:none; cursor:pointer; font-family:inherit; transition:.15s;
-  }
+  .navlink{display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:8px 12px; border-radius:10px;
+    color:var(--muted); font-size:14px; font-weight:500; background:none; border:none; cursor:pointer; font-family:inherit; transition:.15s; line-height:1.35}
   .navlink:hover{background:var(--surface-2); color:var(--fg); text-decoration:none}
   .navlink.active{background:var(--brand-soft); color:var(--brand); font-weight:600}
-  .navlink .dot{width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.5;flex:none}
+  .navlink .num{width:20px;flex:none;font-size:11px;font-weight:700;opacity:.6;font-family:"JetBrains Mono",monospace}
 
-  /* Main */
   .main{flex:1; min-width:0; display:flex; flex-direction:column; align-items:center}
-  .content{width:100%; max-width:820px; padding:38px 32px 80px}
-  .crumb{font-size:12.5px;color:var(--muted);margin-bottom:10px; display:flex; gap:8px; align-items:center}
+  .content{width:100%; max-width:840px; padding:38px 34px 90px}
+  .crumb{font-size:12.5px;color:var(--muted);margin-bottom:10px}
   .crumb b{color:var(--brand);font-weight:600}
-  .content h1{font-size:32px;margin:.1em 0 .35em}
-  .content h2{font-size:21px;margin:1.9em 0 .5em;padding-top:.3em}
-  .content h3{font-size:16.5px;margin:1.4em 0 .3em;color:#cfe7dd}
+  .content h1{font-size:31px;margin:.1em 0 .3em}
+  .content h2{font-size:20px;margin:1.9em 0 .5em}
+  .content h3{font-size:16px;margin:1.4em 0 .3em;color:#cfe7dd}
   .content p{margin:.6em 0}
   .lead{font-size:17px;color:#c7d6ce}
-  .content ul,.content ol{margin:.5em 0 .9em; padding-left:1.25em}
-  .content li{margin:.32em 0}
-  .content img{width:100%;border-radius:var(--radius);border:1px solid var(--border-strong);margin:1.1em 0;
+  .content ul{margin:.5em 0 .9em; padding-left:1.2em}
+  .content li{margin:.3em 0}
+  .content img{width:100%;border-radius:var(--radius);border:1px solid var(--border-strong);margin:1em 0;
     box-shadow:0 10px 30px rgba(0,0,0,.35)}
-  figure{margin:1.3em 0}
+  figure{margin:1.2em 0}
   figcaption{font-size:12.5px;color:var(--muted);text-align:center;margin-top:.5em}
 
-  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:1.1em 0}
   .callout{border-left:3px solid var(--brand);background:var(--brand-soft);border-radius:8px;padding:12px 16px;margin:1.1em 0;font-size:14.5px}
   .callout.warn{border-left-color:var(--warning);background:rgba(224,160,74,.10)}
+  .callout.info{border-left-color:var(--info);background:rgba(74,163,224,.10)}
   .callout .t{font-weight:600;margin-bottom:2px}
-  .badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px;border:1px solid var(--border-strong);color:var(--muted);background:var(--surface-2)}
-  .badge.g{color:var(--brand);border-color:rgba(46,192,137,.4);background:var(--brand-soft)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;margin:1.1em 0}
 
   table{width:100%;border-collapse:collapse;margin:1.1em 0;font-size:14px}
   th,td{border:1px solid var(--border);padding:9px 12px;text-align:left;vertical-align:top}
   th{background:var(--surface-2);font-weight:600;color:#cfe7dd}
 
-  .steps{counter-reset:s;list-style:none;padding:0;margin:1em 0}
-  .steps li{counter-increment:s;position:relative;padding:2px 0 12px 40px;margin:0}
-  .steps li::before{content:counter(s);position:absolute;left:0;top:0;width:26px;height:26px;border-radius:50%;
-    background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(46,192,137,.35)}
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:1.1em 0}
+  ol.steps>li{counter-increment:s;position:relative;padding:3px 0 16px 44px;margin:0;border-left:1px solid var(--border);margin-left:13px}
+  ol.steps>li:last-child{border-left:1px solid transparent}
+  ol.steps>li::before{content:counter(s);position:absolute;left:-13px;top:0;width:26px;height:26px;border-radius:50%;
+    background:var(--surface-2);color:var(--brand);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(46,192,137,.4)}
+  .req{color:var(--warning);font-weight:600;font-size:12px}
 
   .pager{display:flex;justify-content:space-between;gap:12px;margin-top:44px;border-top:1px solid var(--border);padding-top:22px}
   .pager a{flex:1;display:block;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--fg)}
   .pager a:hover{border-color:var(--brand);text-decoration:none}
   .pager .lbl{font-size:11.5px;color:var(--muted)}
-  .pager .ttl{font-weight:600;color:var(--brand);margin-top:2px}
+  .pager .ttl{font-weight:600;color:var(--brand);margin-top:2px;font-size:14px}
   .pager .next{text-align:right}
   .pager .empty{visibility:hidden}
 
-  /* Mobile */
   .topbar{display:none}
   @media (max-width:900px){
     .side{position:fixed;left:0;top:0;z-index:40;transform:translateX(-100%);transition:.25s;box-shadow:0 0 40px rgba(0,0,0,.6)}
     .side.open{transform:none}
-    .topbar{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;
-      background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px}
+    .topbar{display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:30;background:var(--surface);border-bottom:1px solid var(--border);padding:12px 16px}
     .burger{background:var(--surface-2);border:1px solid var(--border);color:var(--fg);border-radius:9px;padding:7px 11px;font-size:18px;cursor:pointer}
     .content{padding:24px 18px 70px}
-    .content h1{font-size:26px}
+    .content h1{font-size:25px}
     .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:35}
     .scrim.show{display:block}
   }
@@ -120,12 +106,8 @@
     <nav id="nav"></nav>
   </aside>
   <div class="scrim" id="scrim"></div>
-
   <div class="main">
-    <div class="topbar">
-      <button class="burger" id="burger" aria-label="Menú">☰</button>
-      <strong>Manual de Clazz</strong>
-    </div>
+    <div class="topbar"><button class="burger" id="burger" aria-label="Menú">☰</button><strong>Manual de Clazz</strong></div>
     <div class="content">
       <div class="crumb" id="crumb"></div>
       <article id="article"></article>
@@ -136,202 +118,293 @@
 
 <script>
 const IMG = "/doc/capturas/";
-// Cada sección del manual. group = agrupador de la navegación.
+const img = (f,cap) => '<figure><img src="'+IMG+f+'" alt="'+cap+'"><figcaption>'+cap+'</figcaption></figure>';
+const REQ = '<span class="req">(obligatorio)</span>';
+
 const SECTIONS = [
+  /* ===================== EMPEZAR ===================== */
   { id:"bienvenida", group:"Empezar", nav:"Bienvenida", title:"Bienvenida a Clazz", html:`
-    <p class="lead">Clazz es la plataforma donde el equipo de <b>Clazz Digital</b> gestiona sus proyectos de principio a fin: planea el trabajo, atiende los casos de soporte de cada cliente y comparte los entregables — todo en un solo lugar.</p>
-    <p>Este manual te lleva por cada parte del panel, con capturas reales, para que puedas usarla sin depender de nadie.</p>
-    <h2>¿Qué encontrarás dentro?</h2>
+    <p class="lead">Esta guía es un <b>paso a paso</b> de cómo hacer cada cosa en Clazz: crear un proyecto, planear el trabajo, mover el tablero, atender un ticket, generar entregables y administrar tu equipo. Cada tarea trae capturas reales de la pantalla exacta.</p>
+    <h2>Cómo está organizada</h2>
     <table>
-      <tr><th>Módulo</th><th>Para qué sirve</th></tr>
-      <tr><td><b>Panel</b></td><td>Tu resumen del día: proyectos, actividades, casos y cumplimiento.</td></tr>
-      <tr><td><b>Proyectos</b></td><td>Planeación ágil: hitos, fases, actividades, sprints automáticos y tablero.</td></tr>
-      <tr><td><b>Daily</b></td><td>Qué hizo cada persona, qué está en curso y qué está bloqueado.</td></tr>
-      <tr><td><b>Reuniones</b></td><td>Programar reuniones que descuentan capacidad del equipo.</td></tr>
-      <tr><td><b>Mesa de servicio</b></td><td>Tickets/casos de los clientes con tiempos de respuesta (SLA).</td></tr>
-      <tr><td><b>Documento de diseño</b></td><td>Entregables (SRS, manuales) que el cliente aprueba.</td></tr>
-      <tr><td><b>Clientes</b></td><td>Empresas, sus proyectos y su equipo con acceso al portal.</td></tr>
-      <tr><td><b>Equipo</b></td><td>Los miembros internos, sus roles y su capacidad.</td></tr>
+      <tr><th>Bloque</th><th>Qué aprenderás a hacer</th></tr>
+      <tr><td><b>El panel y tu día</b></td><td>Leer el panel y correr el Daily.</td></tr>
+      <tr><td><b>Proyectos</b></td><td>Crear proyecto, armar hitos/fases/actividades, planear sprints, tablero, bloquear, completar, métricas.</td></tr>
+      <tr><td><b>Coordinación</b></td><td>Programar reuniones.</td></tr>
+      <tr><td><b>Soporte</b></td><td>Atender tickets con SLA.</td></tr>
+      <tr><td><b>Entregables</b></td><td>Crear documentos y enviarlos a aprobación.</td></tr>
+      <tr><td><b>Administración</b></td><td>Registrar clientes, crear el equipo y su capacidad, y saber qué ve el cliente.</td></tr>
     </table>
-    <div class="callout"><div class="t">Sobre los roles</div>Lo que ves en el menú depende de tu rol. Un <b>administrador</b> o <b>líder técnico</b> ve todo; un <b>desarrollador</b> ve solo lo que tiene asignado; el <b>cliente</b> entra a un portal aparte (no a este panel).</div>
+    <div class="callout"><div class="t">Lo que ves depende de tu rol</div><b>Administrador</b> y <b>Líder técnico</b> ven todo; el <b>Desarrollador</b> ve solo lo asignado; el <b>Cliente</b> entra a un portal aparte.</div>
   `},
   { id:"ingresar", group:"Empezar", nav:"Iniciar sesión", title:"Iniciar sesión", html:`
-    <p>Entra con tu correo y contraseña. Si es la primera vez, tu administrador ya creó tu cuenta y quedó verificada.</p>
-    <figure><img src="${IMG}01-login.png" alt="Pantalla de inicio de sesión"><figcaption>Pantalla de inicio de sesión de Clazz.</figcaption></figure>
+    <p>Tu administrador ya creó tu cuenta (queda lista sin verificación por correo).</p>
+    ${img("01-login.png","Pantalla de inicio de sesión")}
     <ol class="steps">
-      <li>Escribe tu <b>correo electrónico</b>.</li>
-      <li>Escribe tu <b>contraseña</b>.</li>
-      <li>Pulsa <b>Entrar</b>. Según tu rol, llegarás al Panel del equipo o al Portal del cliente.</li>
+      <li>Escribe tu <b>Correo electrónico</b>.</li>
+      <li>Escribe tu <b>Contraseña</b>.</li>
+      <li>Pulsa <code>Entrar</code>. Según tu rol llegarás al panel del equipo o al portal del cliente.</li>
     </ol>
-    <div class="callout warn"><div class="t">¿Olvidaste tu contraseña?</div>Usa el enlace <b>“¿Olvidaste tu contraseña?”</b> para recibir un código y crear una nueva. Por seguridad, tras varios intentos fallidos la cuenta se bloquea temporalmente.</div>
+    <div class="callout warn"><div class="t">¿Olvidaste tu contraseña?</div>Usa <code>¿Olvidaste tu contraseña?</code> para recibir un código y crear una nueva. Tras varios intentos fallidos la cuenta se bloquea un rato por seguridad.</div>
   `},
-  { id:"panel", group:"Tu día a día", nav:"Panel", title:"El Panel", html:`
-    <p>Es lo primero que ves al entrar. Resume el estado general adaptado a tu rol.</p>
-    <figure><img src="${IMG}02-panel.png" alt="Panel principal"><figcaption>Panel con indicadores y gráficos de estado.</figcaption></figure>
-    <h2>Qué muestra</h2>
+
+  /* ===================== EL PANEL Y TU DÍA ===================== */
+  { id:"panel", group:"El panel y tu día", nav:"Leer el panel", title:"Leer el Panel", html:`
+    <p>Es lo primero al entrar. Resume tu operación según tu rol.</p>
+    ${img("02-panel.png","Panel principal con indicadores y gráficos")}
     <ul>
-      <li><b>Tarjetas superiores:</b> proyectos activos, actividades en curso, casos abiertos, cumplimiento de SLA y CSAT promedio.</li>
-      <li><b>Actividades por estado:</b> cuántas hay en Backlog, Planeado, En ejecución, En pruebas/QA, Bloqueado y Completado.</li>
-      <li><b>Casos por estado:</b> el reparto de los tickets de la mesa de servicio.</li>
+      <li><b>Tarjetas superiores:</b> Proyectos activos, Actividades en curso, Casos abiertos, Cumplimiento SLA y CSAT promedio.</li>
+      <li><b>Actividades por estado</b> y <b>Casos por estado:</b> el reparto actual del trabajo y de los tickets.</li>
     </ul>
-    <div class="callout">Arriba a la derecha está la <b>campana de alertas</b> 🔔: te avisa de actividades que vencen hoy o están vencidas, y de casos nuevos.</div>
+    <div class="callout"><div class="t">La campana 🔔</div>Arriba a la derecha te avisa de actividades que <b>vencen hoy o están vencidas</b> y de <b>casos nuevos</b>.</div>
   `},
-  { id:"daily", group:"Tu día a día", nav:"Daily", title:"La vista Daily", html:`
-    <p>Pensada para la reunión diaria del líder. Muestra, por cada persona, qué pasó el día que elijas.</p>
-    <figure><img src="${IMG}08-daily.png" alt="Vista Daily"><figcaption>Daily: navegable por fecha y centrado en cada desarrollador.</figcaption></figure>
-    <h2>Cómo se usa</h2>
-    <ul>
-      <li><b>Navega por fecha</b> con las flechas ‹ ›, el selector de día o el atajo <b>“Ayer”</b>.</li>
-      <li><b>Totales del día</b>: ejecutadas, en ejecución y bloqueadas.</li>
-      <li><b>Filtro</b>: escribe un nombre, cargo o proyecto para enfocar una sola persona.</li>
-    </ul>
-    <h3>Cada tarjeta de desarrollador incluye</h3>
-    <ul>
-      <li><b>Sus proyectos</b>, con barra de avance.</li>
-      <li><b>Ejecutadas</b> ese día (con horas).</li>
-      <li><b>En ejecución</b> ahora mismo.</li>
-      <li><b>Bloqueos</b>, con el motivo y cuántos días llevan bloqueadas.</li>
-    </ul>
-    <div class="callout">Disponible solo para <b>administradores y líderes técnicos</b>.</div>
+  { id:"daily", group:"El panel y tu día", nav:"Correr el Daily", title:"Correr el Daily", html:`
+    <p>La vista para la reunión diaria. Muestra, por persona, qué pasó el día que elijas. <span class="req">Solo administradores y líderes.</span></p>
+    ${img("08-daily.png","Daily navegable por fecha, centrado en cada desarrollador")}
+    <ol class="steps">
+      <li>Elige el día con las flechas <code>‹</code> <code>›</code>, el selector de fecha o el atajo <code>Ayer</code>.</li>
+      <li>Mira la barra de <b>totales</b>: Ejecutadas · En ejecución · Bloqueadas.</li>
+      <li>Si buscas a alguien, escribe en <code>Filtrar por desarrollador, cargo o proyecto…</code>.</li>
+      <li>En cada tarjeta de persona revisa: <b>sus proyectos</b> (con avance), lo <b>ejecutado</b> ese día, lo que tiene <b>en ejecución</b> y sus <b>bloqueos</b> (con motivo y días bloqueada).</li>
+    </ol>
   `},
-  { id:"proyectos", group:"Proyectos (SCRUM)", nav:"Lista de proyectos", title:"Lista de proyectos", html:`
-    <p>El módulo <b>Proyectos</b> reúne todo el trabajo ágil. Cada proyecto pertenece a un cliente y a un área.</p>
-    <figure><img src="${IMG}03-proyectos.png" alt="Lista de proyectos"><figcaption>Listado de proyectos con su avance.</figcaption></figure>
-    <p>Entra a un proyecto para ver sus tres pestañas: <b>Estructura</b>, <b>Sprints</b> y <b>Tablero</b>, además de <b>Métricas</b> y el resumen de <b>Hitos</b>.</p>
-    <div class="callout">Pueden crear proyectos los <b>administradores</b> y <b>líderes técnicos</b>.</div>
+
+  /* ===================== PROYECTOS ===================== */
+  { id:"crear-proyecto", group:"Proyectos", nav:"Crear un proyecto", title:"Crear un proyecto", html:`
+    <p>Cada proyecto pertenece a un cliente. Se crea desde la ficha del cliente. <span class="req">Solo administradores y líderes técnicos.</span></p>
+    <ol class="steps">
+      <li>Ve a <code>Clientes</code> y entra al cliente (o créalo, ver <a href="#clientes">Registrar un cliente</a>).</li>
+      <li>En la sección <b>Proyectos</b>, pulsa <code>+ Nuevo proyecto</code>.</li>
+      <li>Escribe el <b>Nombre del proyecto</b> ${REQ} — por ejemplo un área: <i>Sitio web, App móvil…</i></li>
+      <li>Opcional: una <b>Descripción</b>.</li>
+      <li>Pulsa <code>Crear proyecto</code>.</li>
+    </ol>
+    ${img("27-modal-nuevo-proyecto.png","Modal “Nuevo proyecto”")}
+    <div class="callout">Un mismo cliente puede tener <b>varios proyectos</b>, uno por área. Luego entra al proyecto para armar su estructura.</div>
   `},
-  { id:"estructura", group:"Proyectos (SCRUM)", nav:"Estructura del trabajo", title:"Estructura: Hitos, Fases y Actividades", html:`
+  { id:"estructura", group:"Proyectos", nav:"Armar la estructura", title:"Armar la estructura: Hitos ▸ Fases ▸ Actividades", html:`
     <p>Clazz organiza el trabajo en tres niveles. Tú defines el <b>qué</b>; el sistema calcula el <b>cuándo</b>.</p>
     <table>
       <tr><th>Nivel</th><th>Qué es</th></tr>
-      <tr><td><b>Hito</b></td><td>Un gran bloque del proyecto (código automático H-01, H-02…).</td></tr>
+      <tr><td><b>Hito</b></td><td>Un gran bloque del proyecto (código automático <code>H-01</code>, <code>H-02</code>…).</td></tr>
       <tr><td><b>Fase</b></td><td>Una etapa dentro de un hito.</td></tr>
       <tr><td><b>Actividad</b></td><td>La tarea concreta: responsable, horas y estado.</td></tr>
     </table>
-    <figure><img src="${IMG}04-proyecto-estructura.png" alt="Estructura del proyecto"><figcaption>Árbol de Hitos ▸ Fases ▸ Actividades con % de avance.</figcaption></figure>
-    <h2>Crear una actividad</h2>
+    ${img("21-panel-actividad.png","Pestaña Estructura: hitos con sus fases y actividades")}
+    <h2>1) Crear un hito</h2>
     <ol class="steps">
-      <li>Pulsa <b>+ Actividad</b> (o crea en línea dentro de una fase).</li>
-      <li>Escribe el nombre y una <b>descripción</b>.</li>
-      <li>Asigna <b>responsable(s)</b> y las <b>horas estimadas</b>.</li>
-      <li>Guarda: entra al backlog y el motor la ubica en el cronograma.</li>
+      <li>En la pestaña <code>Estructura</code>, pulsa <code>+ Nuevo hito</code>.</li>
+      <li>Escribe el <b>Nombre</b> ${REQ} (el código <code>H-01</code> se pone solo).</li>
+      <li>Opcional: <b>Objetivo</b>. Define <b>Inicio</b> ${REQ} y <b>Fin</b> ${REQ}.</li>
+      <li>Pulsa <code>Crear hito</code>.</li>
     </ol>
-    <div class="callout warn"><div class="t">Al completar una actividad</div>El sistema pide <b>evidencia obligatoria</b>: una descripción de lo hecho y al menos un archivo adjunto. La fecha de cierre se registra sola.</div>
-    <div class="callout"><div class="t">Eliminar</div>Solo administradores y líderes pueden borrar actividades o fases. Borrar una fase no borra sus actividades.</div>
+    <h2>2) Agregar fases y actividades</h2>
+    <ol class="steps">
+      <li>Dentro de un hito, pulsa <code>+ Fase</code>, escribe el título y <code>Agregar</code>.</li>
+      <li>Dentro de una fase, pulsa <code>+ Actividad</code> para crearla en línea (o usa <code>+ Actividad</code> del encabezado, ver la sección siguiente).</li>
+    </ol>
+    <div class="callout"><div class="t">Barra “Avance del proyecto”</div>Arriba verás el % completado y <code>{done} de {total} actividades completadas</code>, y cada hito y fase con su propio progreso.</div>
+    <div class="callout warn"><div class="t">Eliminar</div>Solo admin/líder. Borrar una fase <b>no borra</b> sus actividades: quedan “sin fase”.</div>
   `},
-  { id:"sprints", group:"Proyectos (SCRUM)", nav:"Sprints automáticos", title:"Motor de planificación y Sprints", html:`
-    <p>Esta es la magia de Clazz. Tú das las horas, los responsables y la fecha de inicio; el sistema calcula las fechas de cada actividad, el <b>fin del proyecto</b> y <b>genera los sprints solo</b>.</p>
-    <figure><img src="${IMG}05-proyecto-sprints.png" alt="Vista de Sprints"><figcaption>Sprints generados automáticamente, semana calendario (lunes→domingo).</figcaption></figure>
+  { id:"crear-actividad", group:"Proyectos", nav:"Crear una actividad", title:"Crear una actividad", html:`
+    <p>La actividad es la unidad de trabajo. Puedes crearla en línea dentro de una fase o con el botón del encabezado.</p>
+    <ol class="steps">
+      <li>Dentro del proyecto, pulsa <code>+ Actividad</code> (arriba a la derecha).</li>
+      <li><b>Título</b> ${REQ} — ej: <i>Login con Google</i>.</li>
+      <li><b>Prioridad</b>: Baja / Media / Alta / Crítica (por defecto Media).</li>
+      <li><b>Horas estimadas</b> — importante: el motor las usa para calcular fechas.</li>
+      <li>Asígnala a una <b>Fase</b> y/o un <b>Hito</b> (o déjala en <code>— backlog —</code>).</li>
+      <li>Pulsa <code>Crear actividad</code>.</li>
+    </ol>
+    ${img("20-modal-nueva-actividad.png","Modal “Nueva actividad”")}
+    <div class="callout info"><div class="t">Para que entre a la planeación</div>Una actividad necesita <b>responsable</b> y <b>horas estimadas</b>. El responsable se asigna desde el panel de detalle (siguiente sección). Sin eso, queda fuera del cálculo de sprints.</div>
+  `},
+  { id:"detalle-actividad", group:"Proyectos", nav:"Detalle de la actividad", title:"Ver y editar una actividad", html:`
+    <p>Haz clic en cualquier actividad (en la estructura o en el tablero) para abrir su panel de detalle.</p>
+    ${img("21-panel-actividad.png","Clic en una actividad para abrir su panel de detalle")}
+    <p>En el panel puedes editar:</p>
+    <ul>
+      <li><b>Título</b> y <b>Descripción</b>.</li>
+      <li><b>Estado</b>, <b>Prioridad</b>, <b>Fase</b>, <b>Hito</b>, <b>Horas estimadas</b> y <b>Horas reales</b>.</li>
+      <li><b>Responsable(s)</b> (toca los chips), <b>Etiquetas</b>, <b>Criterios de aceptación (DoD)</b>, <b>Subtareas</b>, <b>Adjuntos</b> y <b>Comentarios</b>.</li>
+      <li>Pulsa <code>Guardar cambios</code>.</li>
+    </ul>
+    <div class="callout"><div class="t">Fechas calculadas</div><code>Inicio probable</code> y <code>Cierre probable</code> son de solo lectura: los pone el motor de planificación, no se editan a mano.</div>
+    <div class="callout warn"><div class="t">Zona de eliminar</div>Solo admin/líder ve el botón <code>Eliminar</code> al final del panel.</div>
+  `},
+  { id:"sprints", group:"Proyectos", nav:"Planear y generar sprints", title:"Planear y generar sprints", html:`
+    <p>Aquí está la magia: tú das horas, responsables y fecha de inicio; Clazz calcula las fechas de cada actividad, el fin del proyecto y <b>genera los sprints solo</b>.</p>
+    ${img("05-proyecto-sprints.png","Pestaña Sprints: cronograma y sprints automáticos (lunes→domingo)")}
+    <ol class="steps">
+      <li>Entra a la pestaña <code>Sprints</code>.</li>
+      <li>Ajusta la fecha de <b>Inicio</b> del proyecto.</li>
+      <li>Define <b>Sprint (semanas, lun→dom)</b> — cuántas semanas dura cada sprint (1 a 12).</li>
+      <li>Pulsa <code>Replanificar</code>.</li>
+      <li>Revisa el resultado: <b>Fin estimado (calculado)</b> y cada <b>Sprint</b> con sus hitos, actividades y fechas.</li>
+    </ol>
     <h2>Qué tiene en cuenta el cálculo</h2>
     <ul>
-      <li><b>Capacidad de cada persona</b>: sus horas por día y su % de dedicación a este proyecto.</li>
-      <li><b>Fines de semana y festivos de Colombia</b>: se excluyen automáticamente.</li>
-      <li><b>Reuniones y tickets resueltos</b>: descuentan capacidad y corren el cronograma.</li>
+      <li><b>Capacidad</b> de cada persona: horas/día × % de dedicación al proyecto.</li>
+      <li><b>Fines de semana y festivos de Colombia</b> (se excluyen).</li>
+      <li><b>Reuniones y tickets resueltos</b>, que restan capacidad y corren las fechas.</li>
     </ul>
-    <h2>Replanificar</h2>
-    <ol class="steps">
-      <li>Ajusta la <b>fecha de inicio</b> o la <b>duración del sprint</b> (en semanas).</li>
-      <li>Pulsa <b>Replanificar</b>.</li>
-      <li>Las fechas, el fin estimado y el reparto en sprints se recalculan al instante.</li>
-    </ol>
-    <div class="callout">Los sprints son una <b>consecuencia</b> del plan: cada uno lista qué hitos y actividades entran y en qué fechas. Una actividad sin responsable u horas queda fuera y se avisa.</div>
+    <div class="callout warn"><div class="t">Aviso de pendientes</div>Si ves <code>⚠ N actividad(es) sin responsable o sin horas estimadas</code>, complétalas y vuelve a <code>Replanificar</code>: sin eso no entran al cálculo.</div>
   `},
-  { id:"tablero", group:"Proyectos (SCRUM)", nav:"Tablero Kanban", title:"Tablero Kanban", html:`
-    <p>La vista operativa para mover el trabajo. Arrastra las tarjetas entre columnas según avanzan.</p>
-    <figure><img src="${IMG}06-proyecto-tablero.png" alt="Tablero Kanban"><figcaption>Tablero con las actividades por estado.</figcaption></figure>
-    <h2>Estados</h2>
-    <p>Backlog · Planeado · En ejecución · En pruebas/QA · Bloqueado · Completado.</p>
+  { id:"tablero", group:"Proyectos", nav:"Trabajar en el tablero", title:"Trabajar en el Tablero (Kanban)", html:`
+    <p>La vista para mover el trabajo día a día. Arrastra las tarjetas entre columnas.</p>
+    ${img("06-proyecto-tablero.png","Tablero Kanban por estado")}
+    <h3>Columnas</h3>
+    <p>Backlog · Planeado · En ejecución · En pruebas / QA · Bloqueado · Completado.</p>
+    <h3>Filtrar</h3>
     <ul>
-      <li>El <b>color del riel</b> de cada tarjeta indica su prioridad.</li>
-      <li>Puedes <b>filtrar por período</b> (hoy/semana/mes) y mostrar u ocultar columnas.</li>
+      <li>Busca por texto, o filtra por <b>hito</b>, <b>asignado</b>, <b>prioridad</b> y <b>período</b> (<code>Hoy</code>/<code>Esta semana</code>/<code>Este mes</code>).</li>
+      <li>En <code>Estados:</code> activa o desactiva las columnas que quieres ver.</li>
     </ul>
-    <div class="callout warn"><div class="t">Bloquear una actividad</div>Al pasarla a <b>Bloqueado</b>, Clazz pide un <b>motivo</b> obligatorio y empieza a contar los días bloqueada. Ese motivo aparece en el Daily y en la ficha.</div>
-    <div class="callout"><div class="t">Completar desde el tablero</div>Arrastrar una tarjeta a <b>Completado</b> abre la ventana de cierre que pide la evidencia.</div>
+    <div class="callout"><div class="t">Atajos al arrastrar</div>Soltar una tarjeta en <b>Completado</b> abre la ventana de <a href="#completar">completar con evidencia</a>; soltarla en <b>Bloqueado</b> pide el <a href="#bloquear">motivo del bloqueo</a>.</div>
   `},
-  { id:"metricas", group:"Proyectos (SCRUM)", nav:"Métricas del proyecto", title:"Métricas del proyecto", html:`
-    <p>Desde el botón <b>Métricas</b> ves la salud del proyecto en gráficos.</p>
-    <figure><img src="${IMG}07-proyecto-metricas.png" alt="Métricas del proyecto"><figcaption>Esfuerzo por sprint, reparto por estado y avance.</figcaption></figure>
+  { id:"bloquear", group:"Proyectos", nav:"Bloquear / desbloquear", title:"Bloquear y desbloquear una actividad", html:`
+    <p>Cuando algo detiene una actividad, bloquéala con su motivo. Clazz cuenta los días de bloqueo solo.</p>
+    <ol class="steps">
+      <li>Abre la actividad (o arrástrala a <b>Bloqueado</b> en el tablero).</li>
+      <li>Cambia el <b>Estado</b> a <code>Bloqueado</code>: se abre la ventana <b>Bloquear actividad</b>.</li>
+      <li>Escribe el <b>Motivo del bloqueo</b> ${REQ} — ej: <i>Esperando acceso al servidor del cliente</i>.</li>
+      <li>Pulsa <code>Bloquear</code>.</li>
+    </ol>
+    ${img("23-modal-bloquear.png","Ventana “Bloquear actividad” con el motivo obligatorio")}
+    <div class="callout"><div class="t">Desbloquear</div>Cuando se resuelva, cambia el estado de vuelta (ej. a <b>En ejecución</b>). Los <b>días en bloqueo</b> quedan registrados y se ven en el panel y en el <a href="#daily">Daily</a>.</div>
+  `},
+  { id:"completar", group:"Proyectos", nav:"Completar con evidencia", title:"Completar una actividad (con evidencia)", html:`
+    <p>Para cerrar una actividad, Clazz exige evidencia del trabajo. Así queda trazabilidad.</p>
+    <ol class="steps">
+      <li>Abre la actividad y pulsa <code>✓ Marcar completada</code> (o arrástrala a <b>Completado</b>).</li>
+      <li><b>Horas reales</b> ${REQ} — cuántas horas tomó de verdad.</li>
+      <li>La <b>Fecha de finalización</b> se pone sola (hoy).</li>
+      <li><b>Descripción de la evidencia</b> ${REQ} — qué se hizo y cómo se validó.</li>
+      <li><b>Adjunto de evidencia</b> ${REQ} — una imagen, PDF o documento (máx. 15 MB).</li>
+      <li>Pulsa <code>Marcar como completada</code>.</li>
+    </ol>
+    ${img("22-modal-completar.png","Ventana “Completar actividad”: horas, evidencia y adjunto obligatorios")}
+    <div class="callout warn">Sin las horas, la descripción <b>y</b> el adjunto, el sistema no deja completar.</div>
+  `},
+  { id:"metricas", group:"Proyectos", nav:"Ver métricas", title:"Ver las métricas del proyecto", html:`
+    <p>Desde el botón <code>Métricas</code> (encabezado del proyecto) ves su salud en gráficos.</p>
+    ${img("07-proyecto-metricas.png","Métricas del proyecto")}
     <ul>
       <li><b>Esfuerzo por sprint (horas):</b> cuánto trabajo entra en cada sprint.</li>
-      <li><b>Actividades por estado:</b> el reparto actual.</li>
-      <li><b>Avance:</b> qué porcentaje está completado.</li>
+      <li><b>Actividades por estado</b> y <b>% de avance</b>.</li>
     </ul>
     <div class="callout">El esfuerzo se mide en <b>horas</b> (no en “story points”).</div>
   `},
-  { id:"reuniones", group:"Coordinación", nav:"Reuniones", title:"Reuniones", html:`
-    <p>Programa reuniones con varios asistentes. Además de agendarlas, <b>descuentan capacidad</b> del equipo y corren los cronogramas.</p>
-    <figure><img src="${IMG}09-reuniones.png" alt="Reuniones"><figcaption>Agenda de reuniones del equipo.</figcaption></figure>
+
+  /* ===================== COORDINACIÓN ===================== */
+  { id:"reuniones", group:"Coordinación", nav:"Programar una reunión", title:"Programar una reunión", html:`
+    <p>Además de agendarla, la reunión <b>resta capacidad</b> a sus asistentes y recalcula sus cronogramas.</p>
     <ol class="steps">
-      <li>Crea la reunión con fecha, duración y <b>asistentes</b>.</li>
-      <li>Clazz reserva esas horas como capacidad ocupada de cada asistente.</li>
-      <li>Los proyectos de esas personas se <b>replanifican</b> automáticamente.</li>
+      <li>Ve a <code>Reuniones</code> y pulsa <code>+ Nueva reunión</code>.</li>
+      <li><b>Título</b> ${REQ} — ej: <i>Daily · Reunión con cliente</i>.</li>
+      <li><b>Fecha</b> ${REQ} y <b>Duración (horas)</b> ${REQ}.</li>
+      <li>Opcional: una <b>Nota</b>.</li>
+      <li>Marca los <b>Asistentes</b> ${REQ} (al menos uno).</li>
+      <li>Pulsa <code>Programar reunión</code>.</li>
     </ol>
-    <div class="callout">Cancelar una reunión libera la capacidad y vuelve a correr los cronogramas.</div>
+    ${img("24-modal-nueva-reunion.png","Modal “Nueva reunión”")}
+    <div class="callout"><div class="t">Cancelar</div>El botón 🗑 de cada reunión la cancela, <b>libera la capacidad</b> y vuelve a correr los cronogramas.</div>
   `},
-  { id:"mesa", group:"Soporte", nav:"Mesa de servicio", title:"Mesa de servicio (tickets)", html:`
-    <p>Aquí se atienden los <b>casos/tickets</b> que abren los clientes. Cada uno tiene un consecutivo (#001) y un tiempo de respuesta (SLA) según su prioridad.</p>
-    <figure><img src="${IMG}10-mesa-servicio.png" alt="Mesa de servicio"><figcaption>Cola de casos en formato de fichas.</figcaption></figure>
-    <h2>Trabajar un caso</h2>
-    <ul>
-      <li><b>Asignármelo</b> 👤: toma el caso (pasa de Nuevo a Asignado).</li>
-      <li><b>Mensajes</b> 💬: responde al cliente (mensajes públicos) o deja notas internas que el cliente no ve.</li>
-      <li>Alterna entre vista de <b>fichas</b> y <b>lista</b> según prefieras.</li>
-    </ul>
+
+  /* ===================== SOPORTE ===================== */
+  { id:"mesa", group:"Soporte", nav:"Atender un ticket", title:"Atender un ticket (mesa de servicio)", html:`
+    <p>Los clientes abren casos desde su portal. Aquí los atiendes, con tiempos de respuesta (SLA) por prioridad.</p>
+    ${img("10-mesa-servicio.png","Cola de casos en fichas")}
+    <h2>Paso a paso</h2>
+    <ol class="steps">
+      <li>En <code>Mesa de servicio</code>, ubica el caso (cada ficha muestra <code>#001</code>, prioridad, estado y chip de <b>SLA</b>; punto rojo = vencido).</li>
+      <li>Pulsa <code>Asignármelo</code> para tomarlo (pasa de <b>Nuevo</b> a <b>Asignado</b>), o ábrelo con el ícono de abrir.</li>
+      <li>Dentro del caso, escribe en <b>Conversación</b> y pulsa <code>Enviar</code>. Marca <code>Nota interna</code> si es una nota que el cliente <b>no</b> debe ver.</li>
+      <li>En el panel <b>Gestión</b> ajusta <b>Estado</b>, <b>Asignado a</b> y <b>Prioridad</b>.</li>
+      <li>Si el caso implica desarrollo, pulsa <code>Convertir en historia</code> para crear una actividad vinculada.</li>
+    </ol>
+    ${img("31-ticket-detalle.png","Detalle del caso: conversación, SLA y panel de Gestión")}
     <h3>Ciclo del caso</h3>
-    <p>Nuevo → Asignado → En proceso → Resuelto. Si el cliente responde a un caso resuelto, se <b>reabre</b>. Al cerrar puede calificarte (CSAT 1–5).</p>
-    <div class="callout"><div class="t">Chip de SLA</div>Cada ficha muestra si el caso está en tiempo o vencido (punto rojo). El tiempo dedicado por cada persona se registra para reportes.</div>
+    <p>Nuevo → Asignado → En proceso → Resuelto. Si el cliente responde a un caso <b>Resuelto</b>, se <b>reabre</b>. Al cerrarse, el cliente puede calificarte (CSAT 1–5).</p>
+    <div class="callout"><div class="t">Mensajes internos vs. públicos</div>El cliente solo ve los mensajes públicos. Las <b>notas internas</b> (en ámbar) son para el equipo.</div>
   `},
-  { id:"discovery", group:"Entregables", nav:"Documento de diseño", title:"Documento de diseño y entregables", html:`
-    <p>El módulo de <b>Documento de diseño</b> crea los entregables formales del proyecto (SRS, manuales, pruebas, entregas) y los pone a disposición del cliente para su aprobación.</p>
-    <figure><img src="${IMG}12-discovery.png" alt="Documentos de diseño"><figcaption>Listado de documentos y entregables.</figcaption></figure>
-    <h2>Cómo funciona</h2>
-    <ul>
-      <li>Un <b>asistente por secciones</b> te guía para completar el documento.</li>
-      <li>Eliges el <b>tipo</b> (diseño, manual, pruebas, entrega) y puedes <b>adjuntar tu propio PDF</b>.</li>
-      <li>Se genera un <b>PDF</b> con versiones (cada cambio queda como nueva versión).</li>
-      <li>Estados: <b>Borrador → Enviado → Aprobado</b>.</li>
-    </ul>
-    <div class="callout"><div class="t">Aprobación del cliente</div>Cuando lo envías, el cliente lo ve en su portal, puede <b>dejar comentarios</b> y <b>Aprobar</b>. Al aprobar, el documento queda <b>bloqueado</b>. Sus comentarios te llegan como retroalimentación.</div>
-  `},
-  { id:"clientes", group:"Administración", nav:"Clientes", title:"Clientes", html:`
-    <p>Cada <b>cliente</b> es una empresa. Puede tener varios proyectos (uno por área) y su propio equipo con acceso al portal.</p>
-    <figure><img src="${IMG}13-clientes.png" alt="Clientes"><figcaption>Listado de clientes.</figcaption></figure>
-    <p>Entra a un cliente para gestionar sus proyectos y su gente.</p>
-    <figure><img src="${IMG}14-cliente-detalle.png" alt="Detalle de un cliente"><figcaption>Ficha del cliente: proyectos y equipo.</figcaption></figure>
-    <ul>
-      <li><b>Proyectos:</b> agrega uno o varios (uno por área).</li>
-      <li><b>Equipo del cliente:</b> usuarios que entran al portal. Puedes limitar a qué <b>proyectos</b> tiene acceso cada uno (si no marcas ninguno, ve todos los de su empresa).</li>
-    </ul>
-  `},
-  { id:"equipo", group:"Administración", nav:"Equipo", title:"Equipo interno", html:`
-    <p>En <b>Equipo</b> (solo administradores) gestionas a las personas de Clazz Digital.</p>
-    <figure><img src="${IMG}15-equipo.png" alt="Equipo interno"><figcaption>Miembros del equipo con su rol y cargo.</figcaption></figure>
-    <h2>Crear o editar un miembro</h2>
+
+  /* ===================== ENTREGABLES ===================== */
+  { id:"discovery", group:"Entregables", nav:"Crear un entregable", title:"Crear un entregable y enviarlo a aprobación", html:`
+    <p>El módulo <code>Documento de diseño</code> genera entregables (diseño/SRS, manual, pruebas, entrega) que el cliente aprueba desde su portal.</p>
+    <h2>1) Crear el documento</h2>
     <ol class="steps">
-      <li>Datos: nombre, apellido, correo, contraseña, <b>rol</b> y <b>cargo</b>.</li>
-      <li>Define su capacidad: <b>horas por día</b> y su <b>% de dedicación</b> por proyecto (con prioridad).</li>
-      <li>Guarda. La cuenta queda verificada y lista para entrar.</li>
+      <li>Ve a <code>Documento de diseño</code> y pulsa <code>+ Nuevo documento</code>.</li>
+      <li>Elige el <b>Proyecto</b> ${REQ}.</li>
+      <li>Elige el <b>Tipo de documento</b> ${REQ}: Documento de diseño / Manual / Documento de pruebas / Documento de entrega.</li>
+      <li>Escribe el <b>Título</b> ${REQ} y pulsa <code>Crear documento</code>.</li>
     </ol>
-    <h2>Roles</h2>
+    ${img("29-modal-nuevo-documento.png","Modal “Nuevo documento de diseño”")}
+    <h2>2) Completarlo con el asistente</h2>
+    ${img("30-wizard-documento.png","Asistente por secciones + panel de estado, PDF y versiones")}
+    <ol class="steps">
+      <li>Recorre las <b>12 secciones</b> (Información general, Objetivos y alcance, … hasta Estimación de horas/presupuesto) con <code>Siguiente →</code> / <code>← Anterior</code>. Usa <code>Guardar borrador</code>.</li>
+      <li>Si prefieres, en <b>Archivo (PDF propio)</b> puedes <b>subir tu propio PDF</b> (ideal para manuales o entregas).</li>
+      <li>Descarga el <b>PDF</b> generado o crea una <code>Nueva versión</code> cuando haya ajustes.</li>
+      <li>Cuando esté listo, pulsa <code>Marcar como enviado</code>: el cliente lo verá en su portal.</li>
+    </ol>
+    <div class="callout"><div class="t">Aprobación y comentarios</div>El cliente puede <b>Aprobar</b> (queda bloqueado) o <b>dejar comentarios</b>. Sus comentarios aparecen en el bloque <b>Comentarios del cliente</b> del asistente.</div>
+    <div class="callout info">La sección 12 (<b>Estimación de horas / presupuesto</b>) se marca como <b>confidencial / uso interno</b> en el PDF.</div>
+  `},
+
+  /* ===================== ADMINISTRACIÓN ===================== */
+  { id:"clientes", group:"Administración", nav:"Registrar un cliente", title:"Registrar un cliente y su equipo", html:`
+    <p>Un cliente es una empresa: tiene proyectos y usuarios que entran a su portal.</p>
+    ${img("14-cliente-detalle.png","Ficha del cliente: proyectos y equipo del cliente")}
+    <h2>Agregar un usuario del cliente</h2>
+    <ol class="steps">
+      <li>Entra al cliente y, en <b>Equipo del cliente</b>, pulsa <code>+ Nuevo usuario</code>.</li>
+      <li><b>Nombre</b> ${REQ} y <b>Apellido</b> ${REQ}.</li>
+      <li><b>Correo</b> ${REQ} y <b>Contraseña</b> ${REQ} (mínimo 8).</li>
+      <li>Opcional: <b>Cargo</b>.</li>
+      <li>En <b>Proyectos que puede ver</b>, marca a cuáles tiene acceso (si no marcas ninguno, ve <b>todos</b> los del cliente).</li>
+      <li>Pulsa <code>Crear usuario</code>.</li>
+    </ol>
+    ${img("28-modal-nuevo-usuario-cliente.png","Modal “Nuevo usuario” del cliente")}
+    <div class="callout">Con <code>Editar cliente</code> cambias sus datos de contacto; con el botón de editar de cada usuario ajustas acceso, cargo o contraseña, o lo desactivas.</div>
+  `},
+  { id:"equipo", group:"Administración", nav:"Crear el equipo", title:"Crear el equipo y su capacidad", html:`
+    <p>En <code>Equipo</code> (solo administradores) gestionas a las personas de Clazz Digital.</p>
+    <h2>Crear un miembro</h2>
+    <ol class="steps">
+      <li>Pulsa <code>+ Nuevo miembro</code>.</li>
+      <li><b>Nombre</b> ${REQ}, <b>Apellido</b> ${REQ}, <b>Correo</b> ${REQ}, <b>Contraseña</b> ${REQ} (mín. 8).</li>
+      <li>Elige el <b>Rol</b> ${REQ} y, opcional, el <b>Cargo</b>.</li>
+      <li>Pulsa <code>Crear miembro</code> (queda lista para entrar).</li>
+    </ol>
+    ${img("25-modal-nuevo-miembro.png","Modal “Nuevo miembro del equipo”")}
+    <h2>Definir su capacidad (clave para la planeación)</h2>
+    <ol class="steps">
+      <li>En la fila del miembro pulsa <b>Editar</b>.</li>
+      <li>En <b>Planificación</b>, define sus <b>Horas de trabajo diarias</b>.</li>
+      <li>Pulsa <code>+ Asignar proyecto (% dedicación · prioridad)</code> y, por cada proyecto, indica el <b>% de dedicación</b> y la <b>prioridad</b> (1 = mayor).</li>
+      <li>Vigila que la <b>Dedicación total</b> no pase de 100% (se pone en rojo si se excede).</li>
+      <li>Pulsa <code>Guardar cambios</code>.</li>
+    </ol>
+    ${img("26-modal-editar-miembro.png","Modal “Editar miembro” con el bloque Planificación")}
     <table>
       <tr><th>Rol</th><th>Qué puede</th></tr>
       <tr><td><b>Administrador</b></td><td>Todo, incluido el equipo interno.</td></tr>
-      <tr><td><b>Líder técnico</b></td><td>Todo lo de proyectos, casos y clientes; ve toda la operación.</td></tr>
+      <tr><td><b>Líder técnico</b></td><td>Proyectos, casos y clientes; ve toda la operación.</td></tr>
       <tr><td><b>Desarrollador</b></td><td>Solo lo que tiene asignado.</td></tr>
       <tr><td><b>Cliente</b></td><td>Entra al portal, no a este panel.</td></tr>
     </table>
-    <div class="callout"><div class="t">Capacidad = planeación</div>Las horas/día y el % de dedicación que pongas aquí son justo lo que usa el motor para calcular fechas y sprints.</div>
+    <div class="callout info">Las <b>horas/día</b> y el <b>% de dedicación</b> son justo lo que usa el motor para calcular fechas y sprints.</div>
   `},
-  { id:"portal", group:"Administración", nav:"Portal del cliente", title:"El portal del cliente", html:`
-    <p>El cliente <b>no entra a este panel</b>: tiene un <b>portal reducido</b> propio, pensado para que vea su proyecto sin ruido técnico.</p>
-    <h2>Qué ve el cliente</h2>
+  { id:"portal", group:"Administración", nav:"Qué ve el cliente", title:"Qué ve el cliente (portal)", html:`
+    <p>El cliente <b>no entra a este panel</b>: tiene un portal propio, reducido. Útil para saber qué experiencia tiene del otro lado.</p>
     <ul>
-      <li><b>Mis proyectos:</b> el avance por hito, fase y sprint (fechas y % completado), sin poder editar.</li>
-      <li><b>Mis aprobaciones:</b> los documentos que le enviaste, para comentar y aprobar.</li>
-      <li><b>Mis tickets:</b> abrir casos (con adjunto), verlos por Abiertos/Cerrados y conversar contigo.</li>
+      <li><b>Mis proyectos:</b> el avance por hito, fase y sprint (solo lectura, sin las actividades sueltas).</li>
+      <li><b>Mis aprobaciones:</b> los documentos enviados, con pestañas <code>Por aprobar</code> / <code>Aprobados</code>. Puede <code>✓ Aprobar documento</code> (queda bloqueado) o dejar un comentario.</li>
+      <li><b>Mis tickets:</b> abrir casos con <code>+ Enviar ticket</code> (asunto, descripción, adjunto y prioridad), verlos por <code>Abiertos</code> / <code>Cerrados</code> y conversar con el equipo.</li>
     </ul>
-    <div class="callout">Todo lo que el cliente hace (aprobar un documento, abrir un caso) te llega a ti dentro del panel. Es la misma información, vista desde cada lado.</div>
-    <div class="card"><b>¿Dudas?</b> Si algo no aparece o no funciona como esperas, casi siempre es un tema de <b>rol o permiso</b>: confirma con tu administrador qué rol tienes. Este manual se actualiza junto con la plataforma.</div>
+    <div class="callout">Todo lo que hace el cliente (aprobar, comentar, abrir un caso) te llega a ti dentro del panel. Es la misma información, vista desde cada lado.</div>
+    <div class="card"><b>¿Algo no aparece?</b> Casi siempre es tema de <b>rol o permiso</b>: confirma tu rol con el administrador. Este manual se actualiza junto con la plataforma.</div>
   `},
 ];
 
@@ -342,28 +415,26 @@ const pager = document.getElementById("pager");
 const side = document.getElementById("side");
 const scrim = document.getElementById("scrim");
 
-// Construir navegación agrupada
-let lastGroup = null;
-SECTIONS.forEach((s) => {
+let lastGroup = null, idx = 0;
+SECTIONS.forEach((s, i) => {
   if (s.group !== lastGroup) {
     const g = document.createElement("div");
     g.className = "navgroup"; g.textContent = s.group;
-    nav.appendChild(g); lastGroup = s.group;
+    nav.appendChild(g); lastGroup = s.group; idx = 0;
   }
   const b = document.createElement("button");
   b.className = "navlink"; b.dataset.id = s.id;
-  b.innerHTML = '<span class="dot"></span>' + s.nav;
+  b.innerHTML = '<span class="num">'+String(i+1).padStart(2,"0")+'</span>' + s.nav;
   b.onclick = () => { go(s.id); closeNav(); };
   nav.appendChild(b);
 });
 
 function go(id) {
-  const i = SECTIONS.findIndex((s) => s.id === id);
-  const s = SECTIONS[i] || SECTIONS[0];
+  const i = Math.max(0, SECTIONS.findIndex((s) => s.id === id));
+  const s = SECTIONS[i];
   article.innerHTML = "<h1>" + s.title + "</h1>" + s.html;
-  crumb.innerHTML = "Manual de Clazz <span>›</span> <span style='color:var(--muted)'>" + s.group + "</span> <span>›</span> <b>" + s.nav + "</b>";
+  crumb.innerHTML = "Manual de Clazz › <span style='color:var(--muted)'>" + s.group + "</span> › <b>" + s.nav + "</b>";
   document.querySelectorAll(".navlink").forEach((n) => n.classList.toggle("active", n.dataset.id === s.id));
-  // Paginación
   const prev = SECTIONS[i-1], next = SECTIONS[i+1];
   pager.innerHTML =
     (prev ? '<a href="#'+prev.id+'"><div class="lbl">‹ Anterior</div><div class="ttl">'+prev.nav+'</div></a>' : '<a class="empty"></a>') +
@@ -371,13 +442,11 @@ function go(id) {
   if (location.hash !== "#"+s.id) history.replaceState(null,"","#"+s.id);
   window.scrollTo(0,0);
 }
-
 function openNav(){ side.classList.add("open"); scrim.classList.add("show"); }
 function closeNav(){ side.classList.remove("open"); scrim.classList.remove("show"); }
 document.getElementById("burger").onclick = openNav;
 scrim.onclick = closeNav;
 window.addEventListener("hashchange", () => go(location.hash.slice(1)));
-
 go(location.hash.slice(1) || "bienvenida");
 </script>
 </body>
