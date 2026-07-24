@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Field";
 import { Select, Textarea } from "@/components/ui/Inputs";
 import { Attachments } from "@/components/ui/Attachments";
 import { CompleteStoryModal } from "./CompleteStoryModal";
+import { BlockReasonModal } from "./BlockReasonModal";
 import {
   STORY_COLUMNS,
   storyCompliance,
@@ -76,6 +77,7 @@ export function StoryPanel({
   const [newComment, setNewComment] = useState("");
   const [tagsText, setTagsText] = useState("");
   const [completeOpen, setCompleteOpen] = useState(false);
+  const [blockOpen, setBlockOpen] = useState(false);
   const [attKey, setAttKey] = useState(0);
 
   async function load() {
@@ -125,10 +127,7 @@ export function StoryPanel({
       return;
     }
     if (value === "BLOCKED" && d.status !== "BLOCKED") {
-      const reason = window.prompt("¿Cuál es el motivo del bloqueo?");
-      if (!reason || !reason.trim()) return;
-      apiSend(`/api/stories/${d.id}`, "PATCH", { status: "BLOCKED", blockReason: reason.trim() })
-        .then(() => { load(); onChanged(); });
+      setBlockOpen(true);
       return;
     }
     set("status", value);
@@ -542,6 +541,17 @@ export function StoryPanel({
         onClose={() => setCompleteOpen(false)}
         onDone={async () => {
           setAttKey((k) => k + 1);
+          await load();
+          onChanged();
+        }}
+      />
+      <BlockReasonModal
+        open={blockOpen}
+        storyTitle={d?.title}
+        onClose={() => setBlockOpen(false)}
+        onConfirm={async (reason) => {
+          if (!d) return;
+          await apiSend(`/api/stories/${d.id}`, "PATCH", { status: "BLOCKED", blockReason: reason });
           await load();
           onChanged();
         }}

@@ -12,6 +12,7 @@ import { NewStoryModal } from "./NewStoryModal";
 import { SprintsModal } from "./SprintsModal";
 import { ProjectMetricsModal } from "./ProjectMetricsModal";
 import { CompleteStoryModal } from "./CompleteStoryModal";
+import { BlockReasonModal } from "./BlockReasonModal";
 import { ProjectStructure } from "./ProjectStructure";
 import { PlanSprintsView } from "./PlanSprintsView";
 import { STORY_COLUMNS, type Story, type StoryStatus, type Sprint, type Epic, type UserOpt } from "@/lib/scrumTypes";
@@ -68,6 +69,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [openMetrics, setOpenMetrics] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [completeStory, setCompleteStory] = useState<{ id: string; title: string } | null>(null);
+  const [blockStory, setBlockStory] = useState<{ id: string; title: string } | null>(null);
 
   // Recarga todo lo dependiente de la estructura (contadores, tablero, árbol).
   const refreshAll = useCallback(() => {
@@ -123,20 +125,25 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
       if (st) setCompleteStory({ id: st.id, title: st.title });
       return;
     }
-    // Bloquear exige explicar el motivo.
-    let blockReason: string | undefined;
+    // Bloquear exige explicar el motivo → abre el modal (no mueve todavía).
     if (status === "BLOCKED") {
-      const r = window.prompt("¿Cuál es el motivo del bloqueo?");
-      if (!r || !r.trim()) return;
-      blockReason = r.trim();
+      const st = stories.find((s) => s.id === storyId);
+      if (st) setBlockStory({ id: st.id, title: st.title });
+      return;
     }
     const prev = stories;
     setStories((cur) => cur.map((s) => (s.id === storyId ? { ...s, status } : s)));
     try {
-      await apiSend(`/api/stories/${storyId}`, "PATCH", { status, ...(blockReason ? { blockReason } : {}) });
+      await apiSend(`/api/stories/${storyId}`, "PATCH", { status });
     } catch {
       setStories(prev); // revertir si falla
     }
+  }
+
+  async function confirmBlock(reason: string) {
+    if (!blockStory) return;
+    await apiSend(`/api/stories/${blockStory.id}`, "PATCH", { status: "BLOCKED", blockReason: reason });
+    refreshAll();
   }
 
   if (loading || !project) {
@@ -328,6 +335,12 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         open={completeStory !== null}
         onClose={() => setCompleteStory(null)}
         onDone={refreshAll}
+      />
+      <BlockReasonModal
+        open={blockStory !== null}
+        storyTitle={blockStory?.title}
+        onClose={() => setBlockStory(null)}
+        onConfirm={confirmBlock}
       />
     </div>
   );
