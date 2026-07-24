@@ -1,26 +1,188 @@
 @import "tailwindcss";
 
+/* ============================================================
+   Clazz — sistema visual "Operaciones en calma"
+   Neutros cálidos (matiz ciruela) + acento violeta con restraint.
+   ============================================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  /* Neutros fríos limpios — modo claro (pareja del verde de marca) */
+  --background: #f1f5f3;
+  --surface: #ffffff;
+  --surface-2: #f6faf8;
+  --border: #e1e8e5;
+  --border-strong: #d0dad6;
+  --foreground: #12201b;
+  --muted: #64716b;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Marca — verde Clazz Digital */
+  --brand: #12a06a;
+  --brand-strong: #0c8a5a;
+  --brand-fg: #ffffff;
+  --brand-soft: #e1f4ec;
+
+  /* Estados semánticos */
+  --success: #1f9d57;
+  --warning: #c9822a;
+  --danger: #db4436;
+  --info: #2f8fd6;
+  --accent-2: #0ea5a0;
+
+  /* Radios y sombras */
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow-sm: 0 1px 2px rgba(16, 32, 27, 0.06), 0 1px 1px rgba(16, 32, 27, 0.04);
+  --shadow-md: 0 10px 30px -12px rgba(16, 32, 27, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    /* Neutros grafito frío con matiz verde muy tenue */
+    --background: #0f1513;
+    --surface: #16201b;
+    --surface-2: #1c2823;
+    --border: #26352f;
+    --border-strong: #33443c;
+    --foreground: #e9f1ed;
+    --muted: #91a099;
+
+    --brand: #2ec089;
+    --brand-strong: #1fa876;
+    --brand-fg: #06231a;
+    --brand-soft: #14271f;
+
+    --success: #3ec27a;
+    --warning: #e0a141;
+    --danger: #f0574a;
+    --info: #4aa8e6;
+    --accent-2: #34c7bd;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 18px 40px -16px rgba(0, 0, 0, 0.6);
   }
 }
 
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-accent-2: var(--accent-2);
+
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-display);
+  --font-mono: var(--font-mono);
+
+  --radius: var(--radius);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
 body {
-  background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background-color: var(--background);
+}
+
+/* Atmósfera sutil: dos halos de marca muy tenues (firma ambiental).
+   Van en una CAPA FIJA PROPIA (pseudo-elemento) en vez de
+   `background-attachment: fixed` en el body: así se quedan anclados al
+   viewport pero forman su propio layer de composición y NO obligan a
+   repintar el contenido al arrastrar en el Kanban (evita el lag/desvío
+   del puntero). Al no ser ancestro del contenido, tampoco afecta a los
+   modales ni al DragOverlay (position:fixed). */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(60rem 60rem at 108% -10%, color-mix(in oklab, var(--brand) 12%, transparent), transparent 60%),
+    radial-gradient(50rem 50rem at -10% 110%, color-mix(in oklab, var(--accent-2) 8%, transparent), transparent 55%);
+}
+
+/* Títulos con la display face */
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), var(--font-sans), sans-serif;
+  letter-spacing: -0.01em;
+}
+
+/* Foco visible y accesible en todo control interactivo */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Números tabulares y datos */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scrollbar afinada (webkit) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--muted) 40%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in oklab, var(--muted) 60%, transparent);
+  background-clip: padding-box;
+}
+
+/* Skeleton shimmer */
+@keyframes clazz-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--muted) 12%, transparent) 25%,
+    color-mix(in oklab, var(--muted) 22%, transparent) 37%,
+    color-mix(in oklab, var(--muted) 12%, transparent) 63%
+  );
+  background-size: 200% 100%;
+  animation: clazz-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Entrada suave para paneles/tarjetas */
+@keyframes clazz-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+.rise {
+  animation: clazz-rise 0.28s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

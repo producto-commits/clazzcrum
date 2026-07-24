@@ -1,0 +1,45 @@
+# Infraestructura local de desarrollo — Clazz
+# PostgreSQL (base de datos) + MinIO (almacenamiento de archivos S3-compatible).
+# En producción (VPS Hostinger) se usarán los mismos servicios, con credenciales seguras.
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: clazz_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: clazz
+      POSTGRES_PASSWORD: clazz_dev_password
+      POSTGRES_DB: clazz
+    ports:
+      - "5433:5432" # 5433 en host para no chocar con otros Postgres locales
+    volumes:
+      - clazz_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clazz"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: clazz_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: clazz_minio
+      MINIO_ROOT_PASSWORD: clazz_minio_dev_password
+    ports:
+      - "9000:9000" # API S3
+      - "9001:9001" # Consola web
+    volumes:
+      - clazz_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  clazz_db_data:
+  clazz_minio_data:

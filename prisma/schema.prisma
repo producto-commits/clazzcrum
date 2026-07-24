@@ -1,0 +1,542 @@
+// Esquema de datos — Plataforma SCRUM + Mesa de Servicio (Clazz)
+// Modelo completo validado en DISENO_Y_PLAN.md. Las funcionalidades se
+// implementan por fases, pero el esquema se define de una vez para tener
+// una base estable.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+//  AUTENTICACIÓN Y RBAC
+// ============================================================
+
+model User {
+  id              String    @id @default(cuid())
+  email           String    @unique
+  passwordHash    String
+  name            String
+  jobTitle        String? // cargo dentro del equipo
+  isActive        Boolean   @default(true)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  roles         UserRole[]
+  otpCodes      OtpCode[]
+  refreshTokens RefreshToken[]
+  auditLogs     AuditLog[]
+  notifications Notification[]
+
+  // Cliente (empresa) al que pertenece un usuario con rol "client".
+  clientId String?
+  client   Client? @relation("ClientMembers", fields: [clientId], references: [id], onDelete: SetNull)
+  // Proyectos que este usuario-cliente puede ver (vacío = todos los de su cliente).
+  projectAccess UserProjectAccess[]
+
+  // Relaciones de negocio
+  storyAssignments   StoryAssignee[]
+  taskAssignments    Task[]          @relation("TaskAssignee")
+  comments           Comment[]
+  timeEntries        TimeEntry[]
+  reportedTickets    Ticket[]        @relation("TicketReporter")
+  assignedTickets    Ticket[]        @relation("TicketAssignee")
+  ticketMessages     TicketMessage[]
+  uploadedFiles      Attachment[]
+  designDocComments  DesignDocComment[]
+
+  @@index([email])
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  key         String           @unique // admin | client | developer | tech_lead
+  name        String
+  description String?
+  users       UserRole[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id       String           @id @default(cuid())
+  action   String // create | read | edit | delete
+  resource String // project | epic | story | sprint | ticket | user | sla | design_doc ...
+  roles    RolePermission[]
+
+  @@unique([action, resource])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+enum OtpPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+
+model OtpCode {
+  id        String     @id @default(cuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  codeHash  String
+  purpose   OtpPurpose
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int        @default(0)
+  lastSentAt DateTime  @default(now())
+  createdAt DateTime   @default(now())
+
+  @@index([userId, purpose])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // login | create | update | delete | status_change ...
+  resource   String
+  resourceId String?
+  metadata   Json?
+  ip         String?
+  createdAt  DateTime @default(now())
+
+  @@index([resource, resourceId])
+  @@index([userId])
+}
+
+// ============================================================
+//  SCRUM
+// ============================================================
+
+model Client {
+  id          String    @id @default(cuid())
+  name        String
+  contactName String?
+  email       String?
+  phone       String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Equipo del cliente: usuarios (rol client) que acceden al portal de esta empresa.
+  members  User[]   @relation("ClientMembers")
+
+  projects Project[]
+  tickets  Ticket[]
+}
+
+enum ProjectStatus {
+  PLANNING
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+model Project {
+  id            String        @id @default(cuid())
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name          String
+  description   String?
+  status        ProjectStatus @default(PLANNING)
+  startDate     DateTime?
+  estimatedEnd  DateTime?
+  actualEnd     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  epics       Epic[]
+  stories     UserStory[]
+  sprints     Sprint[]
+  designDocs  DesignDoc[]
+  viewers     UserProjectAccess[]
+
+  @@index([clientId])
+}
+
+// Acceso de un usuario-cliente a un proyecto específico.
+model UserProjectAccess {
+  userId    String
+  projectId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@id([userId, projectId])
+  @@index([projectId])
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum EpicStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+model Epic {
+  id          String     @id @default(cuid())
+  projectId   String
+  project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // Jerarquía anidada: la épica pertenece a un sprint.
+  sprintId    String?
+  sprint      Sprint?    @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  title       String
+  description String?
+  priority    Priority   @default(MEDIUM)
+  status      EpicStatus @default(OPEN)
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  stories UserStory[]
+
+  @@index([projectId])
+  @@index([sprintId])
+}
+
+enum StoryStatus {
+  BACKLOG
+  PLANNED
+  IN_PROGRESS
+  QA
+  BLOCKED
+  DONE
+}
+
+model UserStory {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  epicId    String?
+  epic      Epic?    @relation(fields: [epicId], references: [id], onDelete: SetNull)
+  sprintId  String?
+  sprint    Sprint?  @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+
+  // Formato "Como [rol] quiero [funcionalidad] para [beneficio]" (en desuso en la UI)
+  asRole String?
+  iWant  String?
+  soThat String?
+  title  String // resumen legible
+  description String? // descripción libre de la historia
+  observation String? // observación libre (distinta del comentario de cierre)
+
+  priority      Priority    @default(MEDIUM)
+  status        StoryStatus @default(BACKLOG)
+  storyPoints   Int?
+  estimateHours Float?
+  spentHours    Float       @default(0)
+  tags          String[]    @default([])
+
+  startDate    DateTime?
+  estimatedEnd DateTime?
+  actualEnd    DateTime?
+  completionEvidence String? // descripción de la evidencia al completar
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignees          StoryAssignee[]
+  tasks              Task[]
+  comments           Comment[]
+  timeEntries        TimeEntry[]
+  acceptanceCriteria AcceptanceCriterion[]
+  linkedTickets      Ticket[]              @relation("TicketToStory")
+
+  @@index([projectId])
+  @@index([sprintId])
+  @@index([epicId])
+}
+
+model StoryAssignee {
+  storyId String
+  userId  String
+  story   UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([storyId, userId])
+}
+
+model AcceptanceCriterion {
+  id      String    @id @default(cuid())
+  storyId String
+  story   UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  text    String
+  done    Boolean   @default(false)
+  order   Int       @default(0)
+}
+
+model Task {
+  id            String    @id @default(cuid())
+  storyId       String
+  story         UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  title         String
+  done          Boolean   @default(false)
+  assigneeId    String?
+  assignee      User?     @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  estimateHours Float?
+  spentHours    Float     @default(0)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  timeEntries TimeEntry[]
+
+  @@index([storyId])
+}
+
+model Sprint {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  goal      String?
+  startDate DateTime
+  endDate   DateTime
+  capacity  Int? // en story points
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  epics   Epic[]
+  stories UserStory[]
+
+  @@index([projectId])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  storyId   String
+  story     UserStory @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime  @default(now())
+
+  @@index([storyId])
+}
+
+model TimeEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storyId   String?
+  story     UserStory? @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  taskId    String?
+  task      Task?     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  minutes   Int
+  note      String?
+  date      DateTime  @default(now())
+
+  @@index([storyId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+// ============================================================
+//  MESA DE SERVICIO
+// ============================================================
+
+enum TicketStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  WAITING_CLIENT
+  RESOLVED
+  CLOSED
+  REOPENED
+}
+
+model TicketCategory {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  tickets Ticket[]
+}
+
+model SLAPolicy {
+  id               String   @id @default(cuid())
+  priority         Priority @unique
+  firstResponseMins Int
+  resolutionMins   Int
+  tickets          Ticket[]
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  clientId    String
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  reporterId  String?
+  reporter    User?        @relation("TicketReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  assigneeId  String?
+  assignee    User?        @relation("TicketAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  categoryId  String?
+  category    TicketCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  subject     String
+  description String
+  priority    Priority     @default(MEDIUM)
+  status      TicketStatus @default(NEW)
+
+  // SLA
+  slaPolicyId       String?
+  slaPolicy         SLAPolicy? @relation(fields: [slaPolicyId], references: [id], onDelete: SetNull)
+  firstResponseDueAt DateTime?
+  resolutionDueAt    DateTime?
+  firstRespondedAt   DateTime?
+  resolvedAt         DateTime?
+  closedAt           DateTime?
+
+  // Trazabilidad soporte -> historia
+  linkedStoryId String?
+  linkedStory   UserStory? @relation("TicketToStory", fields: [linkedStoryId], references: [id], onDelete: SetNull)
+
+  csatScore Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages TicketMessage[]
+
+  @@index([clientId])
+  @@index([assigneeId])
+  @@index([status])
+}
+
+enum MessageVisibility {
+  PUBLIC // visible para el cliente
+  INTERNAL // nota interna (admin/desarrolladores)
+}
+
+model TicketMessage {
+  id         String            @id @default(cuid())
+  ticketId   String
+  ticket     Ticket            @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId     String?
+  user       User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  body       String
+  visibility MessageVisibility @default(PUBLIC)
+  createdAt  DateTime          @default(now())
+
+  @@index([ticketId])
+}
+
+// ============================================================
+//  DISCOVERY / DOCUMENTO DE DISEÑO
+// ============================================================
+
+enum DesignDocStatus {
+  DRAFT
+  SENT
+  APPROVED
+}
+
+model DesignDoc {
+  id             String          @id @default(cuid())
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  status         DesignDocStatus @default(DRAFT)
+  currentVersion Int             @default(1)
+  approvedAt     DateTime? // cuándo lo aprobó el cliente (bloquea acciones)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  versions DesignDocVersion[]
+  comments DesignDocComment[]
+
+  @@index([projectId])
+}
+
+// Comentarios del cliente sobre el documento (retroalimentación para los avances).
+model DesignDocComment {
+  id          String    @id @default(cuid())
+  designDocId String
+  designDoc   DesignDoc @relation(fields: [designDocId], references: [id], onDelete: Cascade)
+  version     Int // versión a la que se refiere el comentario
+  body        String
+  authorId    String?
+  author      User?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now())
+
+  @@index([designDocId])
+}
+
+model DesignDocVersion {
+  id              String    @id @default(cuid())
+  designDocId     String
+  designDoc       DesignDoc @relation(fields: [designDocId], references: [id], onDelete: Cascade)
+  version         Int
+  answers         Json // respuestas de las 12 secciones del cuestionario
+  generatedFileKey String? // clave en almacenamiento del PDF generado
+  changeNote      String?
+  createdAt       DateTime  @default(now())
+
+  @@unique([designDocId, version])
+}
+
+// ============================================================
+//  TRANSVERSAL
+// ============================================================
+
+model Attachment {
+  id         String   @id @default(cuid())
+  entityType String // story | task | ticket | design_doc
+  entityId   String
+  fileName   String
+  mimeType   String
+  size       Int
+  storageKey String
+  uploadedById String?
+  uploadedBy   User?  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // status_change | assignment | mention | sla_due ...
+  title     String
+  body      String?
+  link      String?
+  payload   Json?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
