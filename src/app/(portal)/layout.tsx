@@ -55,6 +55,19 @@ export default async function PortalLayout({ children }: { children: React.React
         <aside className="sm:w-52 sm:shrink-0">
           <div className="sm:sticky sm:top-20">
             <Sidebar items={items} />
+            {/* Guía del usuario final (página estática servida en /guia) */}
+            <a
+              href="/guia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center gap-2.5 whitespace-nowrap rounded-[10px] px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface hover:text-foreground"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+              </svg>
+              Guía de uso
+            </a>
           </div>
         </aside>
         <main className="min-w-0 flex-1">{children}</main>
