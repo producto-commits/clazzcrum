@@ -82,6 +82,9 @@ export function TicketDetail({
   const [convertOpen, setConvertOpen] = useState(false);
   const [convertProject, setConvertProject] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resolveOpen, setResolveOpen] = useState(false);
+  const [resolveHours, setResolveHours] = useState("");
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   const canEdit = can("edit", "ticket");
   const canConvert = can("create", "story");
@@ -101,6 +104,39 @@ export function TicketDetail({
     try {
       await apiSend(`/api/tickets/${ticketId}`, "PATCH", data);
       await load();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Cambio de estado: si pasa a RESUELTO por primera vez, el desarrollador
+  // debe indicar cuántas horas le tomó — abrimos un pequeño modal.
+  function onChangeStatus(next: string) {
+    if (next === "RESOLVED" && d && d.status !== "RESOLVED") {
+      setResolveHours("");
+      setResolveError(null);
+      setResolveOpen(true);
+      return;
+    }
+    patch({ status: next });
+  }
+  async function submitResolve() {
+    const hours = Number(resolveHours);
+    if (!Number.isFinite(hours) || hours <= 0) {
+      setResolveError("Indica cuántas horas te tomó (mayor a 0).");
+      return;
+    }
+    setBusy(true);
+    setResolveError(null);
+    try {
+      await apiSend(`/api/tickets/${ticketId}`, "PATCH", {
+        status: "RESOLVED",
+        resolutionHours: hours,
+      });
+      setResolveOpen(false);
+      await load();
+    } catch (err) {
+      setResolveError(err instanceof Error ? err.message : "Error");
     } finally {
       setBusy(false);
     }
@@ -257,7 +293,7 @@ export function TicketDetail({
             <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Gestión</h2>
             <div>
               <label className="mb-1 block text-xs text-muted">Estado</label>
-              <Select value={d.status} disabled={busy} onChange={(e) => patch({ status: e.target.value })}>
+              <Select value={d.status} disabled={busy} onChange={(e) => onChangeStatus(e.target.value)}>
                 {Object.entries(TICKET_STATUS_LABELS).map(([k, v]) => (
                   <option key={k} value={k}>
                     {v}
@@ -340,6 +376,30 @@ export function TicketDetail({
         </Select>
         <Button onClick={doConvert} loading={busy} disabled={!convertProject} className="mt-3 w-full">
           Crear historia vinculada
+        </Button>
+      </Modal>
+
+      {/* Al pasar a RESUELTO: el desarrollador declara MANUALMENTE cuántas
+          horas le tomó. Ese tiempo alimenta el registro (TicketWorkLog) y
+          resta capacidad del día en la planeación. */}
+      <Modal open={resolveOpen} onClose={() => setResolveOpen(false)} title="Resolver el caso">
+        <p className="mb-3 text-sm text-muted">
+          Indica cuántas horas te tomó resolverlo. Se registrará como tu tiempo dedicado a este caso.
+        </p>
+        <label className="mb-1 block text-xs text-muted">Horas dedicadas *</label>
+        <input
+          type="number"
+          min="0"
+          step="0.25"
+          autoFocus
+          value={resolveHours}
+          onChange={(e) => setResolveHours(e.target.value)}
+          placeholder="Ej: 1.5"
+          className="w-full rounded-lg border border-border-strong bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+        />
+        {resolveError && <p className="mt-2 text-xs text-danger">{resolveError}</p>}
+        <Button onClick={submitResolve} loading={busy} className="mt-3 w-full">
+          Marcar como resuelto
         </Button>
       </Modal>
     </div>

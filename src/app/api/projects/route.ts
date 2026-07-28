@@ -17,8 +17,15 @@ export async function GET() {
   if (scope.clientId) {
     where = { clientId: scope.clientId, ...(scope.projectIds ? { id: { in: scope.projectIds } } : {}) };
   } else if (scope.assignedOnly) {
-    // Desarrollador: solo proyectos con historias asignadas a él.
-    where = { stories: { some: { assignees: { some: { userId: scope.userId } } } } };
+    // Desarrollador: proyectos donde tenga alguna relación real —
+    // dedicación asignada, actividad asignada, o algún ticket asignado.
+    where = {
+      OR: [
+        { assignments: { some: { userId: scope.userId } } },
+        { stories: { some: { assignees: { some: { userId: scope.userId } } } } },
+        { client: { tickets: { some: { assigneeId: scope.userId } } } },
+      ],
+    };
   }
   const projects = await prisma.project.findMany({
     where,

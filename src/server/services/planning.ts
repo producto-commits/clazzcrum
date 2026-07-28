@@ -237,6 +237,24 @@ export async function replanSafe(projectId: string | null | undefined) {
 
 // Replanifica todos los proyectos en los que participa un desarrollador.
 export async function replanForUser(userId: string) {
-  const asg = await prisma.projectAssignment.findMany({ where: { userId }, select: { projectId: true } });
-  for (const a of asg) await replanSafe(a.projectId);
+  // Replanificar todos los proyectos DONDE el usuario tenga peso:
+  // - Con ProjectAssignment (dedicación % a un proyecto), o
+  // - Responsable de alguna actividad activa (no completada) del proyecto.
+  // Si solo miráramos ProjectAssignment, una reunión de alguien que trabaja
+  // en un proyecto sin tener % asignado NO correría el cronograma.
+  const [asg, storyProjects] = await Promise.all([
+    prisma.projectAssignment.findMany({ where: { userId }, select: { projectId: true } }),
+    prisma.userStory.findMany({
+      where: {
+        status: { not: "DONE" },
+        assignees: { some: { userId } },
+      },
+      select: { projectId: true },
+      distinct: ["projectId"],
+    }),
+  ]);
+  const ids = new Set<string>();
+  asg.forEach((a) => ids.add(a.projectId));
+  storyProjects.forEach((s) => ids.add(s.projectId));
+  for (const projectId of ids) await replanSafe(projectId);
 }

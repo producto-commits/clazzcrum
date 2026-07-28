@@ -88,9 +88,22 @@ export async function GET(_req: Request, { params }: Ctx) {
     }
   }
 
+  // Sprints ▸ epics ▸ stories, después de filtrar historias.
+  let sprintsOut = sprints.map((sp) => ({ ...sp, epics: epicsBySprint.get(sp.id) ?? [] }));
+  let looseEpicsOut = looseEpics;
+
+  // Para el desarrollador (assignedOnly): oculta épicas sin historias visibles
+  // y sprints sin épicas visibles. Así no ve cascarones de trabajo ajeno.
+  if (scope.assignedOnly) {
+    sprintsOut = sprintsOut
+      .map((sp) => ({ ...sp, epics: sp.epics.filter((e) => e.stories.length > 0) }))
+      .filter((sp) => sp.epics.length > 0);
+    looseEpicsOut = looseEpicsOut.filter((e) => e.stories.length > 0);
+  }
+
   return ok({
-    sprints: sprints.map((sp) => ({ ...sp, epics: epicsBySprint.get(sp.id) ?? [] })),
-    looseEpics, // épicas sin sprint
-    looseStories, // historias sin épica
+    sprints: sprintsOut,
+    looseEpics: looseEpicsOut,
+    looseStories,
   });
 }

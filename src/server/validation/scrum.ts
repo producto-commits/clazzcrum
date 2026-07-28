@@ -101,12 +101,14 @@ export const commentCreateSchema = z.object({
 });
 
 // ---- Sprint ----
+// Fechas opcionales: el motor calcula el rango real. Si no vienen, la API
+// las rellena a partir de la fecha de inicio del proyecto.
 export const sprintCreateSchema = z.object({
   projectId: z.string().min(1),
   name: z.string().trim().min(1).max(160),
   goal: z.string().trim().max(1000).optional().nullable(),
-  startDate: z.coerce.date(),
-  endDate: z.coerce.date(),
+  startDate: z.coerce.date().optional().nullable(),
+  endDate: z.coerce.date().optional().nullable(),
   capacity: z.coerce.number().int().min(0).max(9999).optional().nullable(),
 });
 export const sprintUpdateSchema = sprintCreateSchema.partial().omit({ projectId: true });

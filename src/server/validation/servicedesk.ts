@@ -25,6 +25,9 @@ export const ticketUpdateSchema = z.object({
   priority: priority.optional(),
   categoryId: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
+  // Horas que el desarrollador declara haber dedicado a resolver el caso.
+  // Se registran cuando el estado pasa a RESUELTO.
+  resolutionHours: z.coerce.number().min(0).max(999).optional().nullable(),
 });
 
 export const ticketMessageSchema = z.object({

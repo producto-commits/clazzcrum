@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/server/db";
-import { verifyAccessToken, type SessionPayload } from "./jwt";
+import { verifyAccessToken, verifyRefreshToken, type SessionPayload } from "./jwt";
+import { rotateRefreshToken } from "./tokens";
 
 export const ACCESS_COOKIE = "clazz_access";
 export const REFRESH_COOKIE = "clazz_refresh";
@@ -30,12 +31,26 @@ export async function clearAuthCookies() {
   jar.set(REFRESH_COOKIE, "", cookieOpts(0));
 }
 
-// Lee y verifica la sesión desde la cookie de acceso (sin tocar BD).
+// Lee y verifica la sesión. Si el access token expiró pero el refresh
+// aún es válido, lo rota transparentemente (así el usuario no pierde la
+// sesión al cambiar de módulo cuando pasan más de 15 min).
 export async function getSession(): Promise<SessionPayload | null> {
   const jar = await cookies();
-  const token = jar.get(ACCESS_COOKIE)?.value;
-  if (!token) return null;
-  return verifyAccessToken(token);
+  const access = jar.get(ACCESS_COOKIE)?.value;
+  if (access) {
+    const s = await verifyAccessToken(access);
+    if (s) return s;
+  }
+  // Access ausente o expirado — intentar refresh.
+  const refresh = jar.get(REFRESH_COOKIE)?.value;
+  if (!refresh) return null;
+  const rPayload = await verifyRefreshToken(refresh);
+  if (!rPayload) return null;
+  const rotated = await rotateRefreshToken(rPayload.userId, rPayload.tokenId, refresh);
+  if (!rotated) return null;
+  await setAuthCookies(rotated.accessToken, rotated.refreshToken);
+  // El nuevo access acaba de emitirse: leerlo para obtener el payload.
+  return verifyAccessToken(rotated.accessToken);
 }
 
 // Carga el usuario completo (con roles) desde la BD.

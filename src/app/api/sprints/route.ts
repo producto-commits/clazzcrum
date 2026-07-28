@@ -26,7 +26,19 @@ export async function POST(req: Request) {
   if (auth instanceof NextResponse) return auth;
   const parsed = await parseBody(req, sprintCreateSchema);
   if (parsed instanceof NextResponse) return parsed;
-  if (parsed.data.endDate < parsed.data.startDate) {
+
+  // Si el usuario no envió fechas, las calculamos: startDate = inicio del proyecto
+  // (o hoy si no lo tiene) y endDate = startDate + 4 semanas. El motor de
+  // planificación las reajustará según el trabajo real que caiga en el hito.
+  const proj = await prisma.project.findUnique({
+    where: { id: parsed.data.projectId },
+    select: { startDate: true },
+  });
+  const start = parsed.data.startDate ?? proj?.startDate ?? new Date();
+  const end =
+    parsed.data.endDate ??
+    new Date(start.getTime() + 4 * 7 * 24 * 60 * 60 * 1000);
+  if (end < start) {
     return fail("La fecha de fin no puede ser anterior al inicio", 422);
   }
 
@@ -47,7 +59,9 @@ export async function POST(req: Request) {
   const cleanName = parsed.data.name.replace(/^\s*(?:SP|H)-\d+\s*[·:.-]?\s*/i, "").trim();
   const name = cleanName ? `${code} · ${cleanName}` : code;
 
-  const sprint = await prisma.sprint.create({ data: { ...parsed.data, name } });
+  const sprint = await prisma.sprint.create({
+    data: { ...parsed.data, name, startDate: start, endDate: end },
+  });
   await writeAudit({
     userId: auth.session.userId,
     action: "create",

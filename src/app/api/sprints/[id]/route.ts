@@ -14,7 +14,13 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const parsed = await parseBody(req, sprintUpdateSchema);
   if (parsed instanceof NextResponse) return parsed;
 
-  const sprint = await prisma.sprint.update({ where: { id }, data: parsed.data });
+  // startDate/endDate son nullable en el schema de entrada (opcionales); en el
+  // modelo son NOT NULL. Filtramos null y solo enviamos los campos con valor real.
+  const { startDate, endDate, ...rest } = parsed.data;
+  const data: typeof rest & { startDate?: Date; endDate?: Date } = { ...rest };
+  if (startDate) data.startDate = startDate;
+  if (endDate) data.endDate = endDate;
+  const sprint = await prisma.sprint.update({ where: { id }, data });
   await writeAudit({
     userId: auth.session.userId,
     action: "update",

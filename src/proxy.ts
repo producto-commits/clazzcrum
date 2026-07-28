@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyAccessToken } from "@/server/auth/jwt";
-import { ACCESS_COOKIE } from "@/server/auth/session";
+import { ACCESS_COOKIE, REFRESH_COOKIE } from "@/server/auth/session";
 
 // Reemplazo de "middleware" en Next 16. Hace comprobaciones optimistas
 // (solo lee la cookie, sin tocar BD) para redirigir usuarios.
@@ -30,13 +30,16 @@ export default async function proxy(req: NextRequest) {
 
   const token = req.cookies.get(ACCESS_COOKIE)?.value;
   const session = token ? await verifyAccessToken(token) : null;
+  // Si el access expiró pero HAY refresh cookie, no botamos la sesión aquí:
+  // el server component o el API refrescarán transparentemente.
+  const hasRefresh = Boolean(req.cookies.get(REFRESH_COOKIE)?.value);
 
   const isStaffArea = STAFF_PREFIXES.some((p) => pathname.startsWith(p));
   const isPortalArea = pathname.startsWith(PORTAL_PREFIX);
   const isProtected = isStaffArea || isPortalArea;
   const isAuthPage = AUTH_PAGES.some((p) => pathname.startsWith(p));
 
-  if (isProtected && !session) {
+  if (isProtected && !session && !hasRefresh) {
     const url = new URL("/login", req.nextUrl);
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);

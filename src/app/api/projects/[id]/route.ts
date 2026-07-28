@@ -32,6 +32,22 @@ export async function GET(_req: Request, { params }: Ctx) {
   if (scope.projectIds && !scope.projectIds.includes(project.id)) {
     return fail("Proyecto no encontrado", 404);
   }
+  // Desarrollador: solo entra si tiene algo real ligado al proyecto
+  // (dedicación asignada, actividad asignada, o ticket asignado del cliente).
+  if (scope.assignedOnly) {
+    const belongs = await prisma.project.findFirst({
+      where: {
+        id: project.id,
+        OR: [
+          { assignments: { some: { userId: scope.userId } } },
+          { stories: { some: { assignees: { some: { userId: scope.userId } } } } },
+          { client: { tickets: { some: { assigneeId: scope.userId } } } },
+        ],
+      },
+      select: { id: true },
+    });
+    if (!belongs) return fail("Proyecto no encontrado", 404);
+  }
   return ok(project);
 }
 

@@ -17,7 +17,13 @@ export async function GET() {
   if (scope.clientId) {
     projectWhere = { clientId: scope.clientId, ...(scope.projectIds ? { id: { in: scope.projectIds } } : {}) };
   } else if (scope.assignedOnly) {
-    projectWhere = { stories: { some: { assignees: { some: { userId: scope.userId } } } } };
+    projectWhere = {
+      OR: [
+        { assignments: { some: { userId: scope.userId } } },
+        { stories: { some: { assignees: { some: { userId: scope.userId } } } } },
+        { client: { tickets: { some: { assigneeId: scope.userId } } } },
+      ],
+    };
   }
 
   const storyWhere: Prisma.UserStoryWhereInput = { project: projectWhere };

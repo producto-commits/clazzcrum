@@ -26,7 +26,8 @@ export function SprintsModal({
   onClose: () => void;
   onChanged: () => void;
 }) {
-  const [form, setForm] = useState({ name: "", goal: "", startDate: "", endDate: "", capacity: "" });
+  // Fechas ya no se piden aquí: las calcula el motor. Solo nombre, objetivo y capacidad.
+  const [form, setForm] = useState({ name: "", goal: "", capacity: "" });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -39,11 +40,9 @@ export function SprintsModal({
         projectId,
         name: form.name,
         goal: form.goal || null,
-        startDate: form.startDate,
-        endDate: form.endDate,
         capacity: form.capacity === "" ? null : Number(form.capacity),
       });
-      setForm({ name: "", goal: "", startDate: "", endDate: "", capacity: "" });
+      setForm({ name: "", goal: "", capacity: "" });
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -92,19 +91,12 @@ export function SprintsModal({
             <Label htmlFor="sgoal">Objetivo</Label>
             <Textarea id="sgoal" value={form.goal} onChange={(e) => setForm({ ...form, goal: e.target.value })} />
           </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label htmlFor="sstart">Inicio *</Label>
-              <Input id="sstart" type="date" required value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="send">Fin *</Label>
-              <Input id="send" type="date" required value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
-            </div>
-            <div>
-              <Label htmlFor="scap">Capacidad</Label>
-              <Input id="scap" type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
-            </div>
+          <div>
+            <Label htmlFor="scap">Capacidad (opcional)</Label>
+            <Input id="scap" type="number" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: e.target.value })} />
+            <p className="mt-1 text-xs text-muted">
+              Las fechas del hito las calcula automáticamente el motor a partir de las actividades y de su fecha de inicio del proyecto.
+            </p>
           </div>
           <Button type="submit" loading={saving}>
             Crear hito

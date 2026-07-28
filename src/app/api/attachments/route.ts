@@ -71,7 +71,18 @@ export async function POST(req: Request) {
   const safeName = file.name.replace(/[^\w.\-]+/g, "_").slice(0, 120) || "archivo";
   const key = `${entityType}/${entityId}/${crypto.randomUUID()}-${safeName}`;
 
-  await putObject(key, buffer, file.type || "application/octet-stream");
+  try {
+    await putObject(key, buffer, file.type || "application/octet-stream");
+  } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error("[attachments] Error al subir a S3/MinIO:", err);
+    return fail(
+      err instanceof Error
+        ? err.message
+        : "No se pudo subir el archivo al almacenamiento",
+      502,
+    );
+  }
 
   const attachment = await prisma.attachment.create({
     data: {

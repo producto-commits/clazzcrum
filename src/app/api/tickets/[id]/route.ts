@@ -86,8 +86,19 @@ export async function PATCH(req: Request, { params }: Ctx) {
     // Primer paso a EN PROCESO marca el inicio de la ejecución.
     if (p.status === "IN_PROGRESS" && !current.inProgressAt) data.inProgressAt = resolvedNow;
     if (p.status === "RESOLVED") {
+      // El desarrollador debe indicar CUÁNTAS HORAS le tomó (obligatorio).
+      // Sin este valor no se puede cerrar el caso: nada de tiempos automáticos.
+      if (current.status !== "RESOLVED") {
+        if (p.resolutionHours == null || p.resolutionHours <= 0) {
+          return fail(
+            "Indica cuántas horas te tomó resolver el caso.",
+            422,
+            { field: "resolutionHours" },
+          );
+        }
+        logExecution = true;
+      }
       data.resolvedAt = resolvedNow;
-      if (current.status !== "RESOLVED") logExecution = true; // evita duplicar en re-guardados
     }
     if (p.status === "CLOSED") data.closedAt = resolvedNow;
     if (p.status === "REOPENED") {
@@ -98,25 +109,25 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   const ticket = await prisma.ticket.update({ where: { id }, data });
 
-  // Registrar el tiempo de ejecución en la tabla de trabajo (para reportes).
+  // Registrar el tiempo de ejecución (declarado MANUALMENTE por el desarrollador).
   if (logExecution) {
-    const startedAt = current.inProgressAt ?? current.firstRespondedAt ?? current.createdAt;
-    const durationSeconds = Math.max(0, Math.round((resolvedNow.getTime() - new Date(startedAt).getTime()) / 1000));
+    const hours = p.resolutionHours as number;
+    const durationSeconds = Math.round(hours * 3600);
+    const startedAt = new Date(resolvedNow.getTime() - durationSeconds * 1000);
     const devId = current.assigneeId ?? auth.session.userId;
     await prisma.ticketWorkLog.create({
       data: {
         ticketId: id,
-        // El desarrollador responsable (asignado); si no hay, quien resuelve.
         userId: devId,
         startedAt,
         endedAt: resolvedNow,
         durationSeconds,
       },
     });
-    // El tiempo del ticket resta capacidad del día → replanificar sus proyectos.
+    // El tiempo declarado resta capacidad del día → replanificar sus proyectos.
     const day = new Date(Date.UTC(resolvedNow.getUTCFullYear(), resolvedNow.getUTCMonth(), resolvedNow.getUTCDate()));
     await prisma.capacityEvent.create({
-      data: { userId: devId, date: day, hours: durationSeconds / 3600, source: "ticket", refId: id },
+      data: { userId: devId, date: day, hours, source: "ticket", refId: id },
     });
     await replanForUser(devId);
   }
