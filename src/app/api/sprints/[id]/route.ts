@@ -16,10 +16,19 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   // startDate/endDate son nullable en el schema de entrada (opcionales); en el
   // modelo son NOT NULL. Filtramos null y solo enviamos los campos con valor real.
-  const { startDate, endDate, ...rest } = parsed.data;
-  const data: typeof rest & { startDate?: Date; endDate?: Date } = { ...rest };
+  const { startDate, endDate, name, ...rest } = parsed.data;
+  const data: typeof rest & { startDate?: Date; endDate?: Date; name?: string } = { ...rest };
   if (startDate) data.startDate = startDate;
   if (endDate) data.endDate = endDate;
+  // Al renombrar, conservamos el código consecutivo (H-01, SP-02…). Si el
+  // usuario ya lo incluyó no lo duplicamos; si escribió solo el título, lo
+  // anteponemos con el código actual del hito.
+  if (name !== undefined) {
+    const current = await prisma.sprint.findUnique({ where: { id }, select: { name: true } });
+    const prefix = current?.name.match(/^(?:SP|H)-\d+/i)?.[0];
+    const cleanNew = name.replace(/^\s*(?:SP|H)-\d+\s*[·:.-]?\s*/i, "").trim();
+    data.name = prefix ? (cleanNew ? `${prefix} · ${cleanNew}` : prefix) : name;
+  }
   const sprint = await prisma.sprint.update({ where: { id }, data });
   await writeAudit({
     userId: auth.session.userId,
