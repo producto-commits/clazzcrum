@@ -84,3 +84,38 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (assignments || dailyHours !== undefined) await replanForUser(id);
   return ok({ ok: true });
 }
+
+// DELETE /api/admin/users/[id] — elimina un usuario (miembro del equipo o
+// contacto del cliente). Requiere permiso `delete:user` (admin).
+// La FK de sesiones/rols/assignments cae por cascada.
+export async function DELETE(req: Request, { params }: Ctx) {
+  const auth = await requirePermission("delete", "user");
+  if (auth instanceof NextResponse) return auth;
+  const { id } = await params;
+
+  // Evita auto-eliminarse.
+  if (id === auth.session.userId) {
+    return fail("No puedes eliminar tu propio usuario.", 400);
+  }
+  const target = await prisma.user.findUnique({
+    where: { id },
+    select: { name: true, email: true, clientId: true, roles: { select: { role: { select: { key: true, name: true } } } } },
+  });
+  if (!target) return fail("Usuario no encontrado", 404);
+
+  await prisma.user.delete({ where: { id } });
+  await writeAudit({
+    userId: auth.session.userId,
+    action: "delete",
+    resource: "user",
+    resourceId: id,
+    metadata: {
+      name: target.name,
+      email: target.email,
+      clientId: target.clientId ?? null,
+      roles: target.roles.map((r) => r.role.key),
+    },
+    ip: clientIp(req),
+  });
+  return ok({ ok: true });
+}

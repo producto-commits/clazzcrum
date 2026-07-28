@@ -35,12 +35,21 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const auth = await requirePermission("delete", "sprint");
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+  const toDelete = await prisma.sprint.findUnique({
+    where: { id },
+    select: { name: true, projectId: true, project: { select: { name: true } } },
+  });
   await prisma.sprint.delete({ where: { id } });
   await writeAudit({
     userId: auth.session.userId,
     action: "delete",
     resource: "sprint",
     resourceId: id,
+    metadata: {
+      name: toDelete?.name ?? null,
+      projectId: toDelete?.projectId ?? null,
+      projectName: toDelete?.project?.name ?? null,
+    },
     ip: clientIp(req),
   });
   return ok({ ok: true });

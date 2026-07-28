@@ -39,6 +39,8 @@ export default async function DashboardLayout({
   if (can("design_doc")) items.push({ href: "/discovery", label: t.nav.discovery, icon: "discovery" });
   if (can("client")) items.push({ href: "/clients", label: t.nav.clients, icon: "clients" });
   if (can("user")) items.push({ href: "/admin/users", label: "Equipo", icon: "team" });
+  // Auditoría: solo para quien puede eliminar usuarios (admin puro).
+  if (perms.has("delete:user")) items.push({ href: "/admin/logs", label: "Auditoría", icon: "logs" });
 
   return (
     <div className="flex min-h-full flex-1 flex-col">

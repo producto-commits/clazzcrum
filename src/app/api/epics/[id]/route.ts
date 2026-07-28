@@ -29,12 +29,21 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const auth = await requirePermission("delete", "epic");
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+  const toDelete = await prisma.epic.findUnique({
+    where: { id },
+    select: { title: true, projectId: true, project: { select: { name: true } } },
+  });
   await prisma.epic.delete({ where: { id } });
   await writeAudit({
     userId: auth.session.userId,
     action: "delete",
     resource: "epic",
     resourceId: id,
+    metadata: {
+      title: toDelete?.title ?? null,
+      projectId: toDelete?.projectId ?? null,
+      projectName: toDelete?.project?.name ?? null,
+    },
     ip: clientIp(req),
   });
   return ok({ ok: true });

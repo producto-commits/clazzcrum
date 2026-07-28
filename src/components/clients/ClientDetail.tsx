@@ -176,6 +176,17 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     }
   }
 
+  async function removeMember(m: Member) {
+    if (!confirm(`¿Eliminar a ${m.name}? Perderá el acceso al portal.`)) return;
+    setError(null);
+    try {
+      await apiSend(`/api/admin/users/${m.id}`, "DELETE");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo eliminar");
+    }
+  }
+
   if (loading || !c) return <p className="text-sm text-muted">Cargando cliente…</p>;
 
   return (
@@ -282,9 +293,22 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                       : `${m.projectAccess.length} proyecto${m.projectAccess.length > 1 ? "s" : ""}`}
                   </span>
                   {canManageUsers && (
-                    <Button variant="ghost" onClick={() => startEditMember(m)} className="w-auto px-3 py-1.5 text-xs">
-                      Editar
-                    </Button>
+                    <>
+                      <Button variant="ghost" onClick={() => startEditMember(m)} className="w-auto px-3 py-1.5 text-xs">
+                        Editar
+                      </Button>
+                      <button
+                        onClick={() => removeMember(m)}
+                        title="Eliminar contacto"
+                        aria-label={`Eliminar ${m.name}`}
+                        className="rounded-lg p-1.5 text-xs text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1.5 14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2L5 6" />
+                          <path d="M10 11v6M14 11v6" />
+                        </svg>
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
