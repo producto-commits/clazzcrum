@@ -74,12 +74,18 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const auth = await requirePermission("delete", "project");
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+  const toDelete = await prisma.project.findUnique({
+    where: { id },
+    select: { name: true, client: { select: { name: true } } },
+  });
+  if (!toDelete) return fail("Proyecto no encontrado", 404);
   await prisma.project.delete({ where: { id } });
   await writeAudit({
     userId: auth.session.userId,
     action: "delete",
     resource: "project",
     resourceId: id,
+    metadata: { name: toDelete.name, clientName: toDelete.client?.name ?? null },
     ip: clientIp(req),
   });
   return ok({ ok: true });

@@ -42,6 +42,7 @@ const emptyMember = { firstName: "", lastName: "", email: "", password: "", jobT
 export function ClientDetail({ clientId }: { clientId: string }) {
   const { can } = useMe();
   const canManageUsers = can("create", "user");
+  const canDeleteClient = can("delete", "client");
   const [c, setC] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -176,6 +177,21 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     }
   }
 
+  async function removeClient() {
+    if (!c) return;
+    const detail =
+      [c.projects.length && `${c.projects.length} proyecto(s)`, c._count.tickets && `${c._count.tickets} ticket(s)`]
+        .filter(Boolean)
+        .join(", ") || "sin proyectos ni casos vinculados";
+    if (!confirm(`¿Eliminar el cliente “${c.name}”? Se borrarán también ${detail}. Sus contactos quedarán sin cliente.`)) return;
+    try {
+      await apiSend(`/api/clients/${c.id}`, "DELETE");
+      window.location.href = "/clients";
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "No se pudo eliminar");
+    }
+  }
+
   async function removeMember(m: Member) {
     if (!confirm(`¿Eliminar a ${m.name}? Perderá el acceso al portal.`)) return;
     setError(null);
@@ -201,9 +217,25 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             {[c.contactName, c.email, c.phone].filter(Boolean).join(" · ") || "Sin datos de contacto"}
           </p>
         </div>
-        <Button variant="ghost" onClick={openEdit} className="ml-auto w-auto px-3">
-          Editar cliente
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button variant="ghost" onClick={openEdit} className="w-auto px-3">
+            Editar cliente
+          </Button>
+          {canDeleteClient && (
+            <button
+              type="button"
+              onClick={removeClient}
+              title="Eliminar cliente"
+              aria-label="Eliminar cliente"
+              className="rounded-lg p-2 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1.5 14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2L5 6" />
+                <path d="M10 11v6M14 11v6" />
+              </svg>
+            </button>
+          )}
+        </div>
       </div>
 
       {c.notes && (

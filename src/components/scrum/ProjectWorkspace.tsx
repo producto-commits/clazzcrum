@@ -11,6 +11,8 @@ import { StoryPanel } from "./StoryPanel";
 import { NewStoryModal } from "./NewStoryModal";
 import { SprintsModal } from "./SprintsModal";
 import { ProjectMetricsModal } from "./ProjectMetricsModal";
+import { EditProjectModal } from "./EditProjectModal";
+import { ProjectTeamModal } from "./ProjectTeamModal";
 import { CompleteStoryModal } from "./CompleteStoryModal";
 import { BlockReasonModal } from "./BlockReasonModal";
 import { ProjectStructure } from "./ProjectStructure";
@@ -43,6 +45,7 @@ function inPeriod(s: Story, period: "" | "day" | "week" | "month"): boolean {
 type Project = {
   id: string;
   name: string;
+  description: string | null;
   status: string;
   client: { id: string; name: string };
   epics: Epic[];
@@ -67,6 +70,8 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [openNew, setOpenNew] = useState(false);
   const [openSprints, setOpenSprints] = useState(false);
   const [openMetrics, setOpenMetrics] = useState(false);
+  const [openEditProject, setOpenEditProject] = useState(false);
+  const [openTeam, setOpenTeam] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [completeStory, setCompleteStory] = useState<{ id: string; title: string } | null>(null);
   const [blockStory, setBlockStory] = useState<{ id: string; title: string } | null>(null);
@@ -82,6 +87,8 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const canEditStory = can("edit", "story");
   const canCreateStory = can("create", "story");
   const canPlan = can("create", "sprint");
+  const canEditProject = can("edit", "project");
+  const canDeleteProject = can("delete", "project");
   // Eliminar historias/épicas: solo admin y líder técnico (permiso delete).
   const canDeleteStory = can("delete", "story");
   const canDeleteEpic = can("delete", "epic");
@@ -146,6 +153,20 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
     refreshAll();
   }
 
+  async function deleteProject() {
+    if (!project) return;
+    const msg =
+      `¿Eliminar el proyecto “${project.name}”?\n\n` +
+      "Se borrarán TODOS sus hitos, fases, actividades, adjuntos, documentos y tickets vinculados. Esta acción no se puede deshacer.";
+    if (!confirm(msg)) return;
+    try {
+      await apiSend(`/api/projects/${project.id}`, "DELETE");
+      window.location.href = "/projects";
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "No se pudo eliminar el proyecto");
+    }
+  }
+
   if (loading || !project) {
     return <p className="text-sm text-muted">Cargando proyecto…</p>;
   }
@@ -161,17 +182,41 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
           <p className="text-sm text-muted">{project.client.name}</p>
         </div>
         {!isClient && (
-          <div className="ml-auto flex flex-wrap gap-2">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenMetrics(true)}>
               Métricas
             </Button>
             <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenSprints(true)}>
               Hitos ({project.sprints.length})
             </Button>
+            {canEditProject && (
+              <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenTeam(true)}>
+                Equipo
+              </Button>
+            )}
+            {canEditProject && (
+              <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenEditProject(true)}>
+                Editar
+              </Button>
+            )}
             {canCreateStory && (
               <Button className="w-auto px-4" onClick={() => setOpenNew(true)}>
                 + Actividad
               </Button>
+            )}
+            {canDeleteProject && (
+              <button
+                type="button"
+                onClick={deleteProject}
+                title="Eliminar proyecto"
+                aria-label="Eliminar proyecto"
+                className="rounded-lg p-2 text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6l-1.5 14a2 2 0 0 1-2 2h-7a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6M14 11v6" />
+                </svg>
+              </button>
             )}
           </div>
         )}
@@ -341,6 +386,18 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         storyTitle={blockStory?.title}
         onClose={() => setBlockStory(null)}
         onConfirm={confirmBlock}
+      />
+      <EditProjectModal
+        project={project}
+        open={openEditProject}
+        onClose={() => setOpenEditProject(false)}
+        onSaved={refreshAll}
+      />
+      <ProjectTeamModal
+        projectId={project.id}
+        open={openTeam}
+        onClose={() => setOpenTeam(false)}
+        onSaved={refreshAll}
       />
     </div>
   );
