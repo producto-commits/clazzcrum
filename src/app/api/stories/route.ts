@@ -77,12 +77,31 @@ export async function POST(req: Request) {
   // Toda historia nueva entra en Backlog salvo que se indique otro estado.
   if (!data.status) data.status = "BACKLOG";
 
-  // Si el creador es desarrollador (no líder/admin), se autoasigna la historia.
+  // Auto-asignación de la actividad:
+  //   1) Si el creador es desarrollador (no líder/admin), se autoasigna.
+  //   2) Si nadie está asignado todavía y el PROYECTO tiene un "dueño" (el
+  //      developer con mayor dedicación en ProjectAssignment), va a él.
+  //      Así, al crear actividades en un proyecto con un solo dev, quedan
+  //      asignadas sin tener que elegirlo cada vez.
   const roles = auth.session.roles;
   const isDeveloper =
     roles.includes("developer") && !roles.includes("admin") && !roles.includes("tech_lead");
   let finalAssignees = assigneeIds ?? [];
-  if (isDeveloper && finalAssignees.length === 0) finalAssignees = [auth.session.userId];
+  if (finalAssignees.length === 0) {
+    if (isDeveloper) {
+      finalAssignees = [auth.session.userId];
+    } else {
+      const owner = await prisma.projectAssignment.findFirst({
+        where: {
+          projectId: parsed.data.projectId,
+          user: { isActive: true, roles: { some: { role: { key: { in: ["developer", "tech_lead"] } } } } },
+        },
+        orderBy: [{ dedicationPct: "desc" }, { priority: "asc" }],
+        select: { userId: true },
+      });
+      if (owner) finalAssignees = [owner.userId];
+    }
+  }
 
   const story = await prisma.userStory.create({
     data: {

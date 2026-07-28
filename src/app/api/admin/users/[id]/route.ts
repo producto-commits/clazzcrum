@@ -17,7 +17,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const { id } = await params;
   const parsed = await parseBody(req, adminUserUpdateSchema);
   if (parsed instanceof NextResponse) return parsed;
-  const { name, email, jobTitle, roleKey, isActive, password, projectIds, dailyHours, weeklyHours, assignments } = parsed.data;
+  const { name, email, jobTitle, roleKey, isActive, password, projectIds, dailyHours, weeklyHours, assignments, clientId } = parsed.data;
 
   const data: Prisma.UserUpdateInput = {};
   if (name !== undefined) data.name = name;
@@ -33,11 +33,36 @@ export async function PATCH(req: Request, { params }: Ctx) {
   }
 
   // Cambiar de rol: se reemplaza el conjunto de roles por el elegido.
+  // Regla especial cuando se cruza la frontera entre "staff" y "cliente":
+  //   - staff → client: el usuario necesita un clientId (viene en el body si no lo tenía).
+  //   - client → staff: se limpia el vínculo con el cliente y sus accesos a proyectos.
   if (roleKey) {
     const role = await prisma.role.findUnique({ where: { key: roleKey } });
     if (!role) return fail("Rol inválido", 400);
+    const current = await prisma.user.findUnique({
+      where: { id },
+      select: { clientId: true },
+    });
+    if (roleKey === "client") {
+      const targetClientId = clientId ?? current?.clientId ?? null;
+      if (!targetClientId) {
+        return fail(
+          "Para cambiar el rol a Cliente hay que indicar a qué cliente pertenece.",
+          422,
+          { field: "clientId" },
+        );
+      }
+      data.client = { connect: { id: targetClientId } };
+    } else if (current?.clientId) {
+      // Deja de ser cliente: se suelta del cliente y se quitan sus accesos por proyecto.
+      data.client = { disconnect: true };
+      await prisma.userProjectAccess.deleteMany({ where: { userId: id } });
+    }
     await prisma.userRole.deleteMany({ where: { userId: id } });
     await prisma.userRole.create({ data: { userId: id, roleId: role.id } });
+  } else if (clientId !== undefined) {
+    // Cambio de cliente para un contacto existente (sin cambio de rol).
+    data.client = clientId ? { connect: { id: clientId } } : { disconnect: true };
   }
 
   if (Object.keys(data).length) {

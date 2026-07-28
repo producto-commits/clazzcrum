@@ -11,9 +11,9 @@ export async function GET() {
   const auth = await requirePermission("read", "user");
   if (auth instanceof NextResponse) return auth;
 
+  // Todos los usuarios — incluye clientes, para poder cambiarles el rol si
+  // hace falta. La UI marca los que son contactos de cliente.
   const users = await prisma.user.findMany({
-    // Equipo interno: excluye usuarios de portal de cliente (viven en cada cliente).
-    where: { roles: { none: { role: { key: "client" } } } },
     orderBy: { createdAt: "desc" },
     select: {
       id: true,
@@ -25,6 +25,8 @@ export async function GET() {
       createdAt: true,
       dailyHours: true,
       weeklyHours: true,
+      clientId: true,
+      client: { select: { id: true, name: true } },
       roles: { include: { role: { select: { key: true, name: true } } } },
       assignments: {
         select: {

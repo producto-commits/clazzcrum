@@ -16,10 +16,13 @@ type Row = {
   jobTitle: string | null;
   isActive: boolean;
   dailyHours: number;
+  clientId: string | null;
+  client: { id: string; name: string } | null;
   roles: { role: { key: string; name: string } }[];
   assignments: Asg[];
 };
 type ProjectOpt = { id: string; name: string; client?: { name: string } };
+type ClientOpt = { id: string; name: string };
 
 const ROLES = [
   { key: "admin", name: "Administrador" },
@@ -53,6 +56,7 @@ type EditForm = {
   password: string;
   dailyHours: string;
   assignments: Asg[];
+  clientId: string; // vacío = sin cliente. Solo obligatorio si roleKey === "client".
 };
 
 export default function AdminUsersPage() {
@@ -65,6 +69,7 @@ export default function AdminUsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [projects, setProjects] = useState<ProjectOpt[]>([]);
+  const [clients, setClients] = useState<ClientOpt[]>([]);
   const [assignPickerOpen, setAssignPickerOpen] = useState(false);
   const [assignQuery, setAssignQuery] = useState("");
 
@@ -79,6 +84,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     load();
     apiGet<ProjectOpt[]>("/api/projects").then(setProjects).catch(() => setProjects([]));
+    apiGet<ClientOpt[]>("/api/clients").then(setClients).catch(() => setClients([]));
   }, []);
 
   async function submitCreate(e: React.FormEvent) {
@@ -109,6 +115,7 @@ export default function AdminUsersPage() {
       password: "",
       dailyHours: String(u.dailyHours ?? 8),
       assignments: (u.assignments ?? []).map((a) => ({ ...a })),
+      clientId: u.clientId ?? "",
     });
   }
 
@@ -130,6 +137,8 @@ export default function AdminUsersPage() {
           dedicationPct: a.dedicationPct,
           priority: a.priority,
         })),
+        // Solo enviamos clientId cuando el rol es cliente. En otros roles la API lo limpia.
+        ...(edit.roleKey === "client" ? { clientId: edit.clientId || null } : {}),
         ...(edit.password ? { password: edit.password } : {}),
       });
       setEditing(null);
@@ -196,6 +205,7 @@ export default function AdminUsersPage() {
                   <div className="truncate text-xs text-muted">
                     {u.email}
                     {u.jobTitle && ` · ${u.jobTitle}`}
+                    {u.client && ` · ${u.client.name}`}
                   </div>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
@@ -291,6 +301,25 @@ export default function AdminUsersPage() {
                 <Input id="ec" value={edit.jobTitle} onChange={(e) => setEdit({ ...edit, jobTitle: e.target.value })} />
               </div>
             </div>
+            {/* Cliente al que pertenece — obligatorio si el rol es Cliente */}
+            {edit.roleKey === "client" && (
+              <div>
+                <Label htmlFor="eclient">Cliente al que pertenece *</Label>
+                <Select
+                  id="eclient"
+                  value={edit.clientId}
+                  onChange={(e) => setEdit({ ...edit, clientId: e.target.value })}
+                >
+                  <option value="">Selecciona un cliente…</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </Select>
+                <p className="mt-1 text-xs text-muted">
+                  Como cliente, entra al portal y solo ve la información de este cliente.
+                </p>
+              </div>
+            )}
             <div>
               <Label htmlFor="ep">Nueva contraseña</Label>
               <Input id="ep" type="text" value={edit.password} onChange={(e) => setEdit({ ...edit, password: e.target.value })} placeholder="Dejar vacío para no cambiar" />

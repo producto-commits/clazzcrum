@@ -33,7 +33,8 @@ export const projectCreateSchema = z.object({
   actualEnd: z.coerce.date().optional().nullable(),
   sprintWeeks: z.coerce.number().int().min(1).max(12).optional(),
 });
-export const projectUpdateSchema = projectCreateSchema.partial().omit({ clientId: true });
+// El proyecto SÍ puede cambiarse de cliente (mover entre clientes).
+export const projectUpdateSchema = projectCreateSchema.partial();
 
 // ---- Épica ----
 export const epicCreateSchema = z.object({

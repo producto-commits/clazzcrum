@@ -32,4 +32,7 @@ export const adminUserUpdateSchema = z.object({
   password: z.string().min(8).max(128).optional().or(z.literal("")),
   // Proyectos que el usuario-cliente puede ver (vacío = todos los de su cliente).
   projectIds: z.array(z.string()).optional(),
+  // Cliente al que se vincula el usuario cuando su rol es "client".
+  // Se ignora si el rol no es cliente (la API lo pone en null al cambiar de rol).
+  clientId: z.string().nullable().optional(),
 });
