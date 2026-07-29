@@ -151,11 +151,6 @@ export default function ReportBugPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted">
-          <span aria-hidden>ℹ</span>
-          Se crea un caso interno con prioridad <b>Alta</b>, asignado al equipo de plataforma. Puedes seguirlo desde <Link href="/service-desk" className="text-brand hover:underline">Mesa de servicio</Link>.
-        </div>
-
         <Button type="submit" loading={saving}>Enviar reporte</Button>
       </form>
     </div>
