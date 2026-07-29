@@ -10,6 +10,7 @@ import { Textarea, Select } from "@/components/ui/Inputs";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MoveProjectModal } from "@/components/scrum/MoveProjectModal";
+import { ProjectStatusBadge } from "@/components/scrum/ProjectStatusBadge";
 
 type Assignment = {
   userId: string;
@@ -129,8 +130,8 @@ export default function ProjectsPage() {
               <Link href={`/projects/${p.id}`} className="block">
                 <div className="flex items-center justify-between gap-2">
                   <span className="min-w-0 truncate pr-2 font-medium">{p.name}</span>
-                  <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[11px] text-muted">
-                    {STATUS_LABELS[p.status] ?? p.status}
+                  <span className="shrink-0">
+                    <ProjectStatusBadge projectId={p.id} status={p.status} />
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-muted">{p.client.name}</div>

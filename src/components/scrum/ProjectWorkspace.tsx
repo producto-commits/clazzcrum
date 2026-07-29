@@ -14,6 +14,7 @@ import { ProjectMetricsModal } from "./ProjectMetricsModal";
 import { EditProjectModal } from "./EditProjectModal";
 import { ProjectTeamModal } from "./ProjectTeamModal";
 import { MoveProjectModal } from "./MoveProjectModal";
+import { ProjectStatusBadge } from "./ProjectStatusBadge";
 import { CompleteStoryModal } from "./CompleteStoryModal";
 import { BlockReasonModal } from "./BlockReasonModal";
 import { ProjectStructure } from "./ProjectStructure";
@@ -180,7 +181,16 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
           <Link href="/projects" className="text-xs text-muted hover:underline">
             ← Proyectos
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+            <ProjectStatusBadge
+              projectId={project.id}
+              status={project.status}
+              editable={canEditProject}
+              size="md"
+              onChanged={refreshAll}
+            />
+          </div>
           <p className="text-sm text-muted">{project.client.name}</p>
         </div>
         {!isClient && (
