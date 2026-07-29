@@ -11,11 +11,18 @@ import { SkeletonCards } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MoveProjectModal } from "@/components/scrum/MoveProjectModal";
 
+type Assignment = {
+  userId: string;
+  dedicationPct: number;
+  priority: number;
+  user: { id: string; name: string; jobTitle: string | null };
+};
 type Project = {
   id: string;
   name: string;
   status: string;
   client: { id: string; name: string };
+  assignments: Assignment[];
   _count: { stories: number; sprints: number; epics: number };
 };
 type ClientOpt = { id: string; name: string };
@@ -127,10 +134,47 @@ export default function ProjectsPage() {
                   </span>
                 </div>
                 <div className="mt-1 text-sm text-muted">{p.client.name}</div>
-                <div className="mt-3 flex gap-2 text-xs text-muted">
+                <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted">
                   <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} actividades</span>
                   <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} hitos</span>
                 </div>
+                {/* Equipo: quién trabaja aquí (de mayor a menor dedicación). */}
+                {p.assignments.length > 0 ? (
+                  <div className="mt-3 border-t border-border pt-2.5">
+                    <div className="mb-1.5 flex items-center justify-between text-[10px] uppercase tracking-wide text-muted">
+                      <span>Equipo</span>
+                      <span>{p.assignments.length} persona{p.assignments.length === 1 ? "" : "s"}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 pr-8">
+                      {p.assignments.slice(0, 4).map((a, idx) => (
+                        <span
+                          key={a.userId}
+                          className={`flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] ${
+                            idx === 0
+                              ? "border-brand/40 bg-brand-soft text-brand"
+                              : "border-border bg-background text-muted"
+                          }`}
+                          title={`${a.user.name}${a.user.jobTitle ? " · " + a.user.jobTitle : ""} — ${a.dedicationPct}%`}
+                        >
+                          <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-bold ${
+                            idx === 0 ? "bg-brand text-brand-fg" : "bg-surface-2 text-foreground"
+                          }`}>
+                            {a.user.name.split(" ").slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join("")}
+                          </span>
+                          <span className="max-w-[9rem] truncate">{a.user.name}</span>
+                          <span className="font-mono opacity-80">{a.dedicationPct}%</span>
+                        </span>
+                      ))}
+                      {p.assignments.length > 4 && (
+                        <span className="text-[11px] text-muted">+{p.assignments.length - 4}</span>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3 border-t border-border pt-2.5 pr-8">
+                    <span className="text-[11px] text-muted">Sin equipo asignado</span>
+                  </div>
+                )}
               </Link>
               {canEditProject && (
                 <button

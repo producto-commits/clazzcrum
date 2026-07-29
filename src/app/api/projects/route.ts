@@ -32,6 +32,18 @@ export async function GET() {
     orderBy: { updatedAt: "desc" },
     include: {
       client: { select: { id: true, name: true } },
+      // Equipo asignado: quién trabaja aquí, con su % de dedicación.
+      // Se muestra en el listado como chip por persona, con el dueño
+      // (mayor dedicación) resaltado.
+      assignments: {
+        orderBy: [{ dedicationPct: "desc" }, { priority: "asc" }],
+        select: {
+          userId: true,
+          dedicationPct: true,
+          priority: true,
+          user: { select: { id: true, name: true, jobTitle: true } },
+        },
+      },
       _count: { select: { stories: true, sprints: true, epics: true } },
     },
   });
