@@ -32,8 +32,10 @@ export async function clearAuthCookies() {
 }
 
 // Lee y verifica la sesión. Si el access token expiró pero el refresh
-// aún es válido, lo rota transparentemente (así el usuario no pierde la
-// sesión al cambiar de módulo cuando pasan más de 15 min).
+// aún es válido, lo rota transparentemente para no botar al usuario al
+// cambiar de módulo. En Server Components no se pueden setear cookies —
+// se ignora el error y solo se devuelve el payload; el navegador refrescará
+// las cookies en el próximo POST del cliente / hit del proxy.
 export async function getSession(): Promise<SessionPayload | null> {
   const jar = await cookies();
   const access = jar.get(ACCESS_COOKIE)?.value;
@@ -41,15 +43,18 @@ export async function getSession(): Promise<SessionPayload | null> {
     const s = await verifyAccessToken(access);
     if (s) return s;
   }
-  // Access ausente o expirado — intentar refresh.
   const refresh = jar.get(REFRESH_COOKIE)?.value;
   if (!refresh) return null;
   const rPayload = await verifyRefreshToken(refresh);
   if (!rPayload) return null;
   const rotated = await rotateRefreshToken(rPayload.userId, rPayload.tokenId, refresh);
   if (!rotated) return null;
-  await setAuthCookies(rotated.accessToken, rotated.refreshToken);
-  // El nuevo access acaba de emitirse: leerlo para obtener el payload.
+  try {
+    await setAuthCookies(rotated.accessToken, rotated.refreshToken);
+  } catch {
+    // Contexto de solo-lectura (Server Component). Ignoramos; devolvemos el
+    // payload del token recién rotado para servir esta request.
+  }
   return verifyAccessToken(rotated.accessToken);
 }
 

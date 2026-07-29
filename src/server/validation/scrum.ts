@@ -17,6 +17,8 @@ export const clientCreateSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")).nullable(),
   phone: z.string().trim().max(60).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
+  // Jerarquía opcional: cliente puede ser subcliente de otro.
+  parentId: z.string().nullable().optional(),
 });
 export const clientUpdateSchema = clientCreateSchema.partial();
 

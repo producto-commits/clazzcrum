@@ -12,7 +12,10 @@ export async function GET() {
 
   const clients = await prisma.client.findMany({
     orderBy: { name: "asc" },
-    include: { _count: { select: { projects: true, tickets: true } } },
+    include: {
+      _count: { select: { projects: true, tickets: true, children: true } },
+      parent: { select: { id: true, name: true } },
+    },
   });
   return ok(clients);
 }
@@ -24,10 +27,16 @@ export async function POST(req: Request) {
 
   const parsed = await parseBody(req, clientCreateSchema);
   if (parsed instanceof NextResponse) return parsed;
-  const { email, ...rest } = parsed.data;
+  const { email, parentId, ...rest } = parsed.data;
+
+  // Validar que el padre exista (si viene).
+  if (parentId) {
+    const parent = await prisma.client.findUnique({ where: { id: parentId }, select: { id: true } });
+    if (!parent) return fail("El cliente padre no existe", 422);
+  }
 
   const client = await prisma.client.create({
-    data: { ...rest, email: email || null },
+    data: { ...rest, email: email || null, parentId: parentId || null },
   });
   await writeAudit({
     userId: auth.session.userId,

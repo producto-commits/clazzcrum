@@ -155,11 +155,20 @@ model Client {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
+  // Jerarquía opcional: un cliente puede pertenecer a otro (empresa madre →
+  // subclientes/sedes/unidades). Al borrar el padre, los hijos quedan a nivel
+  // raíz (SetNull) — no se propaga la eliminación.
+  parentId  String?
+  parent    Client?  @relation("ClientHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Client[] @relation("ClientHierarchy")
+
   // Equipo del cliente: usuarios (rol client) que acceden al portal de esta empresa.
   members  User[]   @relation("ClientMembers")
 
   projects Project[]
   tickets  Ticket[]
+
+  @@index([parentId])
 }
 
 enum ProjectStatus {

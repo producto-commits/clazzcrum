@@ -15,7 +15,8 @@ type Client = {
   contactName: string | null;
   email: string | null;
   phone: string | null;
-  _count: { projects: number; tickets: number };
+  parent: { id: string; name: string } | null;
+  _count: { projects: number; tickets: number; children: number };
 };
 
 export default function ClientsPage() {
@@ -83,19 +84,27 @@ export default function ClientsPage() {
               href={`/clients/${c.id}`}
               className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{c.name}</span>
+              <div className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate font-medium">{c.name}</span>
                 <span className="text-muted" aria-hidden>›</span>
               </div>
+              {c.parent && (
+                <div className="mt-0.5 text-[11px] text-brand">↑ {c.parent.name}</div>
+              )}
               {c.contactName && <div className="text-sm text-muted">{c.contactName}</div>}
               {c.email && <div className="text-sm text-muted">{c.email}</div>}
-              <div className="mt-3 flex gap-2 text-xs text-muted">
+              <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted">
                 <span className="rounded-full bg-background px-2 py-0.5">
                   {c._count.projects} proyectos
                 </span>
                 <span className="rounded-full bg-background px-2 py-0.5">
                   {c._count.tickets} casos
                 </span>
+                {c._count.children > 0 && (
+                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">
+                    {c._count.children} subcliente{c._count.children === 1 ? "" : "s"}
+                  </span>
+                )}
               </div>
             </Link>
           ))}

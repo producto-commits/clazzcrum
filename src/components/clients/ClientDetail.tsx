@@ -17,6 +17,14 @@ type Member = {
   isActive: boolean;
   projectAccess: { projectId: string }[];
 };
+type ChildClient = {
+  id: string;
+  name: string;
+  contactName: string | null;
+  email: string | null;
+  phone: string | null;
+  _count: { projects: number; tickets: number; children: number };
+};
 type Client = {
   id: string;
   name: string;
@@ -24,6 +32,8 @@ type Client = {
   email: string | null;
   phone: string | null;
   notes: string | null;
+  parent: { id: string; name: string } | null;
+  children: ChildClient[];
   projects: Project[];
   members: Member[];
   _count: { tickets: number };
@@ -61,6 +71,8 @@ export function ClientDetail({ clientId }: { clientId: string }) {
     isActive: true,
     projectIds: [] as string[],
   });
+  const [subOpen, setSubOpen] = useState(false);
+  const [subForm, setSubForm] = useState({ name: "", contactName: "", email: "", phone: "" });
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -89,6 +101,28 @@ export function ClientDetail({ clientId }: { clientId: string }) {
       });
       setProjOpen(false);
       setProjForm({ name: "", description: "" });
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function addSubclient(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSaving(true);
+    try {
+      await apiSend("/api/clients", "POST", {
+        name: subForm.name,
+        contactName: subForm.contactName || null,
+        email: subForm.email || null,
+        phone: subForm.phone || null,
+        parentId: clientId,
+      });
+      setSubOpen(false);
+      setSubForm({ name: "", contactName: "", email: "", phone: "" });
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error");
@@ -212,7 +246,18 @@ export function ClientDetail({ clientId }: { clientId: string }) {
           <Link href="/clients" className="text-xs text-muted hover:underline">
             ← Clientes
           </Link>
-          <h1 className="text-2xl font-semibold tracking-tight">{c.name}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-semibold tracking-tight">{c.name}</h1>
+            {c.parent && (
+              <Link
+                href={`/clients/${c.parent.id}`}
+                className="rounded-full bg-brand-soft px-2.5 py-0.5 text-[11px] font-medium text-brand transition-colors hover:brightness-110"
+                title={`Subcliente de ${c.parent.name}`}
+              >
+                ↑ {c.parent.name}
+              </Link>
+            )}
+          </div>
           <p className="text-sm text-muted">
             {[c.contactName, c.email, c.phone].filter(Boolean).join(" · ") || "Sin datos de contacto"}
           </p>
@@ -273,6 +318,58 @@ export function ClientDetail({ clientId }: { clientId: string }) {
                 {p.description && (
                   <p className="mt-1 line-clamp-2 text-sm text-muted">{p.description}</p>
                 )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Subclientes */}
+      <section>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+            Subclientes ({c.children.length})
+          </h2>
+          {canManageUsers && (
+            <Button onClick={() => setSubOpen(true)} className="w-auto px-4">
+              + Nuevo subcliente
+            </Button>
+          )}
+        </div>
+        {c.children.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-border bg-surface/40 px-3 py-4 text-center text-sm text-muted">
+            Este cliente no tiene subclientes. Añade uno si es una empresa madre con sedes o unidades.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {c.children.map((sub) => (
+              <Link
+                key={sub.id}
+                href={`/clients/${sub.id}`}
+                className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate font-medium">{sub.name}</span>
+                  <span className="text-muted" aria-hidden>›</span>
+                </div>
+                {(sub.contactName || sub.email) && (
+                  <div className="mt-1 truncate text-xs text-muted">
+                    {[sub.contactName, sub.email].filter(Boolean).join(" · ")}
+                  </div>
+                )}
+                <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] text-muted">
+                  <span className="rounded-full bg-background px-2 py-0.5">
+                    {sub._count.projects} proyecto{sub._count.projects === 1 ? "" : "s"}
+                  </span>
+                  <span className="rounded-full bg-background px-2 py-0.5">
+                    {sub._count.tickets} ticket{sub._count.tickets === 1 ? "" : "s"}
+                  </span>
+                  {sub._count.children > 0 && (
+                    <span className="rounded-full bg-background px-2 py-0.5">
+                      {sub._count.children} subcliente{sub._count.children === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
               </Link>
             ))}
           </div>
@@ -572,6 +669,35 @@ export function ClientDetail({ clientId }: { clientId: string }) {
             <Textarea id="cnotes" value={editForm.notes} onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })} />
           </div>
           <Button type="submit" loading={saving}>Guardar cambios</Button>
+        </form>
+      </Modal>
+
+      {/* Nuevo subcliente */}
+      <Modal open={subOpen} onClose={() => setSubOpen(false)} title={`Nuevo subcliente · ${c.name}`}>
+        {error && <Alert kind="error">{error}</Alert>}
+        <form onSubmit={addSubclient} className="space-y-3">
+          <div>
+            <Label htmlFor="sn">Nombre *</Label>
+            <Input id="sn" required value={subForm.name} onChange={(e) => setSubForm({ ...subForm, name: e.target.value })} placeholder="Ej: Sede Bogotá" />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="scn">Contacto</Label>
+              <Input id="scn" value={subForm.contactName} onChange={(e) => setSubForm({ ...subForm, contactName: e.target.value })} />
+            </div>
+            <div>
+              <Label htmlFor="se">Correo</Label>
+              <Input id="se" type="email" value={subForm.email} onChange={(e) => setSubForm({ ...subForm, email: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="sp">Teléfono</Label>
+            <Input id="sp" value={subForm.phone} onChange={(e) => setSubForm({ ...subForm, phone: e.target.value })} />
+          </div>
+          <p className="text-xs text-muted">
+            Pertenecerá a <b>{c.name}</b>. Podrás moverlo o hacerlo cliente raíz desde su ficha.
+          </p>
+          <Button type="submit" loading={saving}>Crear subcliente</Button>
         </form>
       </Modal>
     </div>
