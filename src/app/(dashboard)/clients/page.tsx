@@ -77,38 +77,51 @@ export default function ClientsPage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {clients.map((c) => (
-            <Link
-              key={c.id}
-              href={`/clients/${c.id}`}
-              className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="min-w-0 truncate font-medium">{c.name}</span>
-                <span className="text-muted" aria-hidden>›</span>
-              </div>
-              {c.parent && (
-                <div className="mt-0.5 text-[11px] text-brand">↑ {c.parent.name}</div>
-              )}
-              {c.contactName && <div className="text-sm text-muted">{c.contactName}</div>}
-              {c.email && <div className="text-sm text-muted">{c.email}</div>}
-              <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted">
-                <span className="rounded-full bg-background px-2 py-0.5">
-                  {c._count.projects} proyectos
-                </span>
-                <span className="rounded-full bg-background px-2 py-0.5">
-                  {c._count.tickets} casos
-                </span>
-                {c._count.children > 0 && (
-                  <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">
-                    {c._count.children} subcliente{c._count.children === 1 ? "" : "s"}
-                  </span>
+        (() => {
+          const roots = clients.filter((c) => !c.parent);
+          const subs = clients.filter((c) => c.parent);
+          return (
+            <div className="space-y-8">
+              {/* Clientes raíz */}
+              <section>
+                <div className="mb-3 flex items-baseline justify-between">
+                  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                    Clientes ({roots.length})
+                  </h2>
+                  <p className="text-xs text-muted">Empresas independientes</p>
+                </div>
+                {roots.length === 0 ? (
+                  <p className="rounded-2xl border border-dashed border-border bg-surface/40 px-3 py-6 text-center text-sm text-muted">
+                    No hay clientes raíz. Crea uno con el botón <b>+ Nuevo cliente</b>.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {roots.map((c) => (
+                      <ClientCard key={c.id} c={c} />
+                    ))}
+                  </div>
                 )}
-              </div>
-            </Link>
-          ))}
-        </div>
+              </section>
+
+              {/* Subclientes */}
+              {subs.length > 0 && (
+                <section>
+                  <div className="mb-3 flex items-baseline justify-between">
+                    <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">
+                      Subclientes ({subs.length})
+                    </h2>
+                    <p className="text-xs text-muted">Sedes o unidades de otro cliente</p>
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {subs.map((c) => (
+                      <ClientCard key={c.id} c={c} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+          );
+        })()
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Nuevo cliente">
@@ -164,5 +177,37 @@ export default function ClientsPage() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+function ClientCard({ c }: { c: Client }) {
+  return (
+    <Link
+      href={`/clients/${c.id}`}
+      className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate font-medium">{c.name}</span>
+        <span className="text-muted" aria-hidden>›</span>
+      </div>
+      {c.parent && (
+        <div className="mt-0.5 text-[11px] text-brand">↑ {c.parent.name}</div>
+      )}
+      {c.contactName && <div className="text-sm text-muted">{c.contactName}</div>}
+      {c.email && <div className="text-sm text-muted">{c.email}</div>}
+      <div className="mt-3 flex flex-wrap gap-1.5 text-xs text-muted">
+        <span className="rounded-full bg-background px-2 py-0.5">
+          {c._count.projects} proyectos
+        </span>
+        <span className="rounded-full bg-background px-2 py-0.5">
+          {c._count.tickets} casos
+        </span>
+        {c._count.children > 0 && (
+          <span className="rounded-full bg-brand-soft px-2 py-0.5 text-brand">
+            {c._count.children} subcliente{c._count.children === 1 ? "" : "s"}
+          </span>
+        )}
+      </div>
+    </Link>
   );
 }
