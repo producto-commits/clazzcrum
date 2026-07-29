@@ -41,6 +41,8 @@ export default async function DashboardLayout({
   if (can("user")) items.push({ href: "/admin/users", label: "Equipo", icon: "team" });
   // Auditoría: solo para quien puede eliminar usuarios (admin puro).
   if (perms.has("delete:user")) items.push({ href: "/admin/logs", label: "Auditoría", icon: "logs" });
+  // Reportar bug de la plataforma: para todo el equipo interno.
+  items.push({ href: "/report-bug", label: "Reportar bug", icon: "bug" });
 
   return (
     <div className="flex min-h-full flex-1 flex-col">

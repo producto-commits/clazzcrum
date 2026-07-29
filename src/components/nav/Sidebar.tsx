@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 export type NavItem = { href: string; label: string; icon: IconName };
 
-type IconName = "dashboard" | "projects" | "service" | "discovery" | "clients" | "team" | "meetings" | "logs";
+type IconName = "dashboard" | "projects" | "service" | "discovery" | "clients" | "team" | "meetings" | "logs" | "bug";
 
 function Icon({ name }: { name: IconName }) {
   const common = { width: 18, height: 18, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
@@ -41,6 +41,10 @@ function Icon({ name }: { name: IconName }) {
     case "logs":
       return (
         <svg {...common}><path d="M4 4h16v16H4z" /><path d="M8 8h8M8 12h8M8 16h5" /></svg>
+      );
+    case "bug":
+      return (
+        <svg {...common}><path d="M9 4h6" /><path d="M8 6h8v3a4 4 0 01-4 4h0a4 4 0 01-4-4V6z" /><path d="M6 13a4 4 0 004 4v3M18 13a4 4 0 01-4 4v3M4 10h4M16 10h4M4 17l4-2M16 15l4 2" /></svg>
       );
   }
 }
