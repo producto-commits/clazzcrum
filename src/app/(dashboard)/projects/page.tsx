@@ -9,6 +9,7 @@ import { Label, Input, Button, Alert } from "@/components/ui/Field";
 import { Textarea, Select } from "@/components/ui/Inputs";
 import { SkeletonCards } from "@/components/ui/Skeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { MoveProjectModal } from "@/components/scrum/MoveProjectModal";
 
 type Project = {
   id: string;
@@ -38,6 +39,8 @@ export default function ProjectsPage() {
   const [saving, setSaving] = useState(false);
 
   const canCreate = can("create", "project");
+  const canEditProject = can("edit", "project");
+  const [movingProject, setMovingProject] = useState<Project | null>(null);
 
   async function load() {
     setLoading(true);
@@ -112,25 +115,49 @@ export default function ProjectsPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p) => (
-            <Link
+            <div
               key={p.id}
-              href={`/projects/${p.id}`}
-              className="rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
+              className="relative rounded-2xl border border-border bg-surface p-4 transition hover:border-brand/40"
             >
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{p.name}</span>
-                <span className="rounded-full bg-background px-2 py-0.5 text-[11px] text-muted">
-                  {STATUS_LABELS[p.status] ?? p.status}
-                </span>
-              </div>
-              <div className="mt-1 text-sm text-muted">{p.client.name}</div>
-              <div className="mt-3 flex gap-2 text-xs text-muted">
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} actividades</span>
-                <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} hitos</span>
-              </div>
-            </Link>
+              <Link href={`/projects/${p.id}`} className="block">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate pr-2 font-medium">{p.name}</span>
+                  <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-[11px] text-muted">
+                    {STATUS_LABELS[p.status] ?? p.status}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm text-muted">{p.client.name}</div>
+                <div className="mt-3 flex gap-2 text-xs text-muted">
+                  <span className="rounded-full bg-background px-2 py-0.5">{p._count.stories} actividades</span>
+                  <span className="rounded-full bg-background px-2 py-0.5">{p._count.sprints} hitos</span>
+                </div>
+              </Link>
+              {canEditProject && (
+                <button
+                  onClick={() => setMovingProject(p)}
+                  title={`Mover ${p.name} a otro cliente`}
+                  aria-label={`Mover ${p.name} a otro cliente`}
+                  className="absolute bottom-3 right-3 z-10 rounded-lg border border-border bg-background/90 p-1.5 text-muted transition-colors hover:border-brand/40 hover:bg-brand-soft hover:text-brand"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 17L17 7" />
+                    <path d="M8 7h9v9" />
+                  </svg>
+                </button>
+              )}
+            </div>
           ))}
         </div>
+      )}
+
+      {movingProject && (
+        <MoveProjectModal
+          projectId={movingProject.id}
+          currentClient={movingProject.client}
+          open={movingProject !== null}
+          onClose={() => setMovingProject(null)}
+          onMoved={() => { setMovingProject(null); load(); }}
+        />
       )}
 
       <Modal open={open} onClose={() => setOpen(false)} title="Nuevo proyecto">

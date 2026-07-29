@@ -13,6 +13,7 @@ import { SprintsModal } from "./SprintsModal";
 import { ProjectMetricsModal } from "./ProjectMetricsModal";
 import { EditProjectModal } from "./EditProjectModal";
 import { ProjectTeamModal } from "./ProjectTeamModal";
+import { MoveProjectModal } from "./MoveProjectModal";
 import { CompleteStoryModal } from "./CompleteStoryModal";
 import { BlockReasonModal } from "./BlockReasonModal";
 import { ProjectStructure } from "./ProjectStructure";
@@ -72,6 +73,7 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [openMetrics, setOpenMetrics] = useState(false);
   const [openEditProject, setOpenEditProject] = useState(false);
   const [openTeam, setOpenTeam] = useState(false);
+  const [openMove, setOpenMove] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [completeStory, setCompleteStory] = useState<{ id: string; title: string } | null>(null);
   const [blockStory, setBlockStory] = useState<{ id: string; title: string } | null>(null);
@@ -192,6 +194,11 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
             {canEditProject && (
               <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenTeam(true)}>
                 Equipo
+              </Button>
+            )}
+            {canEditProject && (
+              <Button variant="ghost" className="w-auto px-3" onClick={() => setOpenMove(true)}>
+                Mover
               </Button>
             )}
             {canEditProject && (
@@ -398,6 +405,13 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
         open={openTeam}
         onClose={() => setOpenTeam(false)}
         onSaved={refreshAll}
+      />
+      <MoveProjectModal
+        projectId={project.id}
+        currentClient={project.client}
+        open={openMove}
+        onClose={() => setOpenMove(false)}
+        onMoved={refreshAll}
       />
     </div>
   );
