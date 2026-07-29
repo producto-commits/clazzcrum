@@ -53,11 +53,13 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
     ticket: ["create", "read"],
   },
   // Desarrollador: trabaja sus historias/tareas y los tickets asignados.
+  // También puede planificar sus proyectos: crear hitos, fases y actividades
+  // dentro de ellos (crear ≠ eliminar — borrar sigue reservado a admin/líder).
   developer: {
     project: ["read"],
-    epic: ["read"],
-    story: ["read", "edit"],
-    sprint: ["read"],
+    epic: ["create", "read", "edit"],
+    story: ["create", "read", "edit"],
+    sprint: ["create", "read", "edit"],
     task: ["create", "read", "edit"],
     ticket: ["read", "edit"],
     design_doc: ["create", "read", "edit"],
