@@ -53,6 +53,8 @@ model User {
   ticketWorkLogs     TicketWorkLog[]
   assignments        ProjectAssignment[]
   capacityEvents     CapacityEvent[]
+  createdSprints     Sprint[]            @relation("SprintCreator")
+  createdEpics       Epic[]              @relation("EpicCreator")
   meetingAttendance  MeetingAttendee[]
 
   @@index([email])
@@ -321,10 +323,16 @@ model Epic {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  // Quién la creó — el developer creador siempre la ve, aunque no tenga
+  // actividades propias todavía.
+  createdById String?
+  createdBy   User?   @relation("EpicCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
   stories UserStory[]
 
   @@index([projectId])
   @@index([sprintId])
+  @@index([createdById])
 }
 
 enum StoryStatus {
@@ -436,10 +444,16 @@ model Sprint {
   order     Int      @default(0)
   createdAt DateTime @default(now())
 
+  // Quién lo creó — usado para que un developer siempre vea los hitos que crea,
+  // aunque aún no tengan actividades asignadas a él.
+  createdById String?
+  createdBy   User?   @relation("SprintCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
   epics   Epic[]
   stories UserStory[]
 
   @@index([projectId])
+  @@index([createdById])
 }
 
 model Comment {

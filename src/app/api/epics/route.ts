@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   const parsed = await parseBody(req, epicCreateSchema);
   if (parsed instanceof NextResponse) return parsed;
 
-  const epic = await prisma.epic.create({ data: parsed.data });
+  const epic = await prisma.epic.create({
+    data: { ...parsed.data, createdById: auth.session.userId },
+  });
   await writeAudit({
     userId: auth.session.userId,
     action: "create",

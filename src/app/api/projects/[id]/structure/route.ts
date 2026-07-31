@@ -45,10 +45,19 @@ export async function GET(_req: Request, { params }: Ctx) {
     prisma.sprint.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { startDate: "asc" }],
+      select: {
+        id: true, projectId: true, name: true, goal: true, startDate: true,
+        endDate: true, capacity: true, order: true, createdAt: true, createdById: true,
+      },
     }),
     prisma.epic.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true, projectId: true, sprintId: true, title: true, description: true,
+        priority: true, status: true, order: true, createdAt: true, updatedAt: true,
+        createdById: true,
+      },
     }),
     prisma.userStory.findMany({
       where: {
@@ -92,13 +101,21 @@ export async function GET(_req: Request, { params }: Ctx) {
   let sprintsOut = sprints.map((sp) => ({ ...sp, epics: epicsBySprint.get(sp.id) ?? [] }));
   let looseEpicsOut = looseEpics;
 
-  // Para el desarrollador (assignedOnly): oculta épicas sin historias visibles
-  // y sprints sin épicas visibles. Así no ve cascarones de trabajo ajeno.
+  // Para el desarrollador (assignedOnly): oculta épicas y sprints en los que
+  // no tenga participación real. Se considera "suyo" un elemento si:
+  //   · tiene actividades asignadas a él, o
+  //   · lo creó él (createdById === userId).
+  // Así, cuando el dev crea un hito o una fase, sigue viéndolo aunque aún no
+  // haya actividades adentro.
   if (scope.assignedOnly) {
+    const uid = scope.userId;
     sprintsOut = sprintsOut
-      .map((sp) => ({ ...sp, epics: sp.epics.filter((e) => e.stories.length > 0) }))
-      .filter((sp) => sp.epics.length > 0);
-    looseEpicsOut = looseEpicsOut.filter((e) => e.stories.length > 0);
+      .map((sp) => ({
+        ...sp,
+        epics: sp.epics.filter((e) => e.stories.length > 0 || e.createdById === uid),
+      }))
+      .filter((sp) => sp.epics.length > 0 || sp.createdById === uid);
+    looseEpicsOut = looseEpicsOut.filter((e) => e.stories.length > 0 || e.createdById === uid);
   }
 
   return ok({

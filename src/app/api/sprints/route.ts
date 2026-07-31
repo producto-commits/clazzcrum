@@ -60,7 +60,13 @@ export async function POST(req: Request) {
   const name = cleanName ? `${code} · ${cleanName}` : code;
 
   const sprint = await prisma.sprint.create({
-    data: { ...parsed.data, name, startDate: start, endDate: end },
+    data: {
+      ...parsed.data,
+      name,
+      startDate: start,
+      endDate: end,
+      createdById: auth.session.userId,
+    },
   });
   await writeAudit({
     userId: auth.session.userId,
