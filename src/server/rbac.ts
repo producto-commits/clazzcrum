@@ -56,6 +56,7 @@ export const ROLE_PERMISSIONS: RolePermissionMap = {
   // También puede planificar sus proyectos: crear hitos, fases y actividades
   // dentro de ellos (crear ≠ eliminar — borrar sigue reservado a admin/líder).
   developer: {
+    client: ["read"], // necesario para elegir cliente al crear un ticket
     project: ["read"],
     epic: ["create", "read", "edit"],
     story: ["create", "read", "edit"],

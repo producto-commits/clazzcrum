@@ -233,18 +233,22 @@ export default function ServiceDeskPage() {
       <Modal open={open} onClose={() => setOpen(false)} title="Nuevo caso de soporte">
         {error && <Alert kind="error">{error}</Alert>}
         <form onSubmit={create} className="space-y-3">
-          {clients.length > 0 && (
-            <div>
-              <Label htmlFor="tclient">Cliente</Label>
-              <Select id="tclient" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })}>
-                {clients.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-          )}
+          <div>
+            <Label htmlFor="tclient">Cliente *</Label>
+            <Select
+              id="tclient"
+              required
+              value={form.clientId}
+              onChange={(e) => setForm({ ...form, clientId: e.target.value })}
+            >
+              <option value="">
+                {clients.length === 0 ? "Cargando clientes…" : "Selecciona un cliente…"}
+              </option>
+              {clients.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+          </div>
           <div>
             <Label htmlFor="subject">Asunto *</Label>
             <Input id="subject" required value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
