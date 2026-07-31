@@ -47,7 +47,8 @@ export async function GET(_req: Request, { params }: Ctx) {
       orderBy: [{ order: "asc" }, { startDate: "asc" }],
       select: {
         id: true, projectId: true, name: true, goal: true, startDate: true,
-        endDate: true, capacity: true, order: true, createdAt: true, createdById: true,
+        endDate: true, capacity: true, order: true, createdAt: true,
+        createdById: true, ownerId: true,
       },
     }),
     prisma.epic.findMany({
@@ -56,7 +57,7 @@ export async function GET(_req: Request, { params }: Ctx) {
       select: {
         id: true, projectId: true, sprintId: true, title: true, description: true,
         priority: true, status: true, order: true, createdAt: true, updatedAt: true,
-        createdById: true,
+        createdById: true, ownerId: true,
       },
     }),
     prisma.userStory.findMany({
@@ -104,18 +105,18 @@ export async function GET(_req: Request, { params }: Ctx) {
   // Para el desarrollador (assignedOnly): oculta épicas y sprints en los que
   // no tenga participación real. Se considera "suyo" un elemento si:
   //   · tiene actividades asignadas a él, o
-  //   · lo creó él (createdById === userId).
-  // Así, cuando el dev crea un hito o una fase, sigue viéndolo aunque aún no
-  // haya actividades adentro.
+  //   · él es el encargado (ownerId), o
+  //   · él lo creó (createdById).
+  // Así, todo hito/fase que se crea en un proyecto asignado al dev queda
+  // visible para él aunque aún no haya actividades adentro.
   if (scope.assignedOnly) {
     const uid = scope.userId;
+    const isMine = (e: { ownerId: string | null; createdById: string | null; stories: unknown[] }) =>
+      e.stories.length > 0 || e.ownerId === uid || e.createdById === uid;
     sprintsOut = sprintsOut
-      .map((sp) => ({
-        ...sp,
-        epics: sp.epics.filter((e) => e.stories.length > 0 || e.createdById === uid),
-      }))
-      .filter((sp) => sp.epics.length > 0 || sp.createdById === uid);
-    looseEpicsOut = looseEpicsOut.filter((e) => e.stories.length > 0 || e.createdById === uid);
+      .map((sp) => ({ ...sp, epics: sp.epics.filter(isMine) }))
+      .filter((sp) => sp.epics.length > 0 || sp.ownerId === uid || sp.createdById === uid);
+    looseEpicsOut = looseEpicsOut.filter(isMine);
   }
 
   return ok({

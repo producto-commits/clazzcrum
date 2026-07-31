@@ -4,6 +4,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { sprintCreateSchema } from "@/server/validation/scrum";
 import { writeAudit } from "@/server/audit";
+import { resolveProjectOwner } from "@/server/services/projectOwner";
 
 // GET /api/sprints?projectId=... — sprints de un proyecto.
 export async function GET(req: Request) {
@@ -59,6 +60,11 @@ export async function POST(req: Request) {
   const cleanName = parsed.data.name.replace(/^\s*(?:SP|H)-\d+\s*[·:.-]?\s*/i, "").trim();
   const name = cleanName ? `${code} · ${cleanName}` : code;
 
+  // El "encargado" del hito es el dueño del proyecto (developer/líder con
+  // mayor dedicación); si no hay, cae al creador para que igual lo vea.
+  const ownerId =
+    (await resolveProjectOwner(parsed.data.projectId)) ?? auth.session.userId;
+
   const sprint = await prisma.sprint.create({
     data: {
       ...parsed.data,
@@ -66,6 +72,7 @@ export async function POST(req: Request) {
       startDate: start,
       endDate: end,
       createdById: auth.session.userId,
+      ownerId,
     },
   });
   await writeAudit({

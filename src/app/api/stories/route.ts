@@ -7,6 +7,7 @@ import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { storyCreateSchema } from "@/server/validation/scrum";
 import { writeAudit } from "@/server/audit";
 import { replanSafe } from "@/server/services/planning";
+import { resolveProjectOwner } from "@/server/services/projectOwner";
 
 const storyInclude = {
   assignees: { include: { user: { select: { id: true, name: true } } } },
@@ -91,15 +92,8 @@ export async function POST(req: Request) {
     if (isDeveloper) {
       finalAssignees = [auth.session.userId];
     } else {
-      const owner = await prisma.projectAssignment.findFirst({
-        where: {
-          projectId: parsed.data.projectId,
-          user: { isActive: true, roles: { some: { role: { key: { in: ["developer", "tech_lead"] } } } } },
-        },
-        orderBy: [{ dedicationPct: "desc" }, { priority: "asc" }],
-        select: { userId: true },
-      });
-      if (owner) finalAssignees = [owner.userId];
+      const ownerId = await resolveProjectOwner(parsed.data.projectId);
+      if (ownerId) finalAssignees = [ownerId];
     }
   }
 

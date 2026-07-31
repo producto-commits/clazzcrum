@@ -55,6 +55,8 @@ model User {
   capacityEvents     CapacityEvent[]
   createdSprints     Sprint[]            @relation("SprintCreator")
   createdEpics       Epic[]              @relation("EpicCreator")
+  ownedSprints       Sprint[]            @relation("SprintOwner")
+  ownedEpics         Epic[]              @relation("EpicOwner")
   meetingAttendance  MeetingAttendee[]
 
   @@index([email])
@@ -328,11 +330,16 @@ model Epic {
   createdById String?
   createdBy   User?   @relation("EpicCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
+  // Encargado de la fase — el dueño del proyecto en el momento de crearla.
+  ownerId String?
+  owner   User?   @relation("EpicOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
   stories UserStory[]
 
   @@index([projectId])
   @@index([sprintId])
   @@index([createdById])
+  @@index([ownerId])
 }
 
 enum StoryStatus {
@@ -449,11 +456,18 @@ model Sprint {
   createdById String?
   createdBy   User?   @relation("SprintCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
+  // Encargado del hito — normalmente el "dueño" del proyecto (developer con
+  // mayor dedicación). Todo hito se autoasigna al encargado al crearse; el
+  // encargado siempre ve sus hitos, aunque otra persona los cree.
+  ownerId String?
+  owner   User?   @relation("SprintOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+
   epics   Epic[]
   stories UserStory[]
 
   @@index([projectId])
   @@index([createdById])
+  @@index([ownerId])
 }
 
 model Comment {

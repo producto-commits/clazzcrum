@@ -4,6 +4,7 @@ import { requirePermission } from "@/server/auth/guard";
 import { parseBody, ok, fail, clientIp } from "@/server/http";
 import { epicCreateSchema } from "@/server/validation/scrum";
 import { writeAudit } from "@/server/audit";
+import { resolveProjectOwner } from "@/server/services/projectOwner";
 
 // GET /api/epics?projectId=... — épicas de un proyecto.
 export async function GET(req: Request) {
@@ -27,8 +28,10 @@ export async function POST(req: Request) {
   const parsed = await parseBody(req, epicCreateSchema);
   if (parsed instanceof NextResponse) return parsed;
 
+  const ownerId =
+    (await resolveProjectOwner(parsed.data.projectId)) ?? auth.session.userId;
   const epic = await prisma.epic.create({
-    data: { ...parsed.data, createdById: auth.session.userId },
+    data: { ...parsed.data, createdById: auth.session.userId, ownerId },
   });
   await writeAudit({
     userId: auth.session.userId,
