@@ -86,8 +86,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
     // Primer paso a EN PROCESO marca el inicio de la ejecución.
     if (p.status === "IN_PROGRESS" && !current.inProgressAt) data.inProgressAt = resolvedNow;
     if (p.status === "RESOLVED") {
-      // El desarrollador debe indicar CUÁNTAS HORAS le tomó (obligatorio).
-      // Sin este valor no se puede cerrar el caso: nada de tiempos automáticos.
+      // Al resolver por primera vez se exige: horas dedicadas, solución
+      // aplicada y al menos una evidencia (archivo o enlace en Attachments).
+      // Nada de tiempos automáticos ni cierres sin sustento.
       if (current.status !== "RESOLVED") {
         if (p.resolutionHours == null || p.resolutionHours <= 0) {
           return fail(
@@ -96,10 +97,26 @@ export async function PATCH(req: Request, { params }: Ctx) {
             { field: "resolutionHours" },
           );
         }
+        const resolution = (p.resolution ?? "").trim();
+        if (!resolution) {
+          return fail("Describe la solución aplicada al caso.", 422, { field: "resolution" });
+        }
+        const attachments = await prisma.attachment.count({
+          where: { entityType: "ticket", entityId: id },
+        });
+        if (attachments === 0) {
+          return fail(
+            "Adjunta al menos un archivo o enlace como evidencia de la solución.",
+            422,
+            { field: "evidence" },
+          );
+        }
+        data.resolution = resolution;
         logExecution = true;
       }
       data.resolvedAt = resolvedNow;
     }
+    if (p.status === "REOPENED") data.resolution = null;
     if (p.status === "CLOSED") data.closedAt = resolvedNow;
     if (p.status === "REOPENED") {
       data.resolvedAt = null;

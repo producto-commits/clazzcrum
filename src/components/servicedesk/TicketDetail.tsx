@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Field";
 import { Select, Textarea, PRIORITY_LABELS, PRIORITY_CLASSES } from "@/components/ui/Inputs";
 import { Modal } from "@/components/ui/Modal";
 import { Attachments } from "@/components/ui/Attachments";
+import { EvidencePicker, MAX_EVIDENCE, uploadEvidence, useEvidence } from "@/components/ui/EvidencePicker";
 import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_CLASSES,
@@ -31,6 +32,7 @@ type Detail = {
   resolutionDueAt: string | null;
   firstRespondedAt: string | null;
   resolvedAt: string | null;
+  resolution: string | null;
   client: { id: string; name: string };
   assignee: { id: string; name: string } | null;
   reporter: { id: string; name: string } | null;
@@ -85,7 +87,10 @@ export function TicketDetail({
   const [busy, setBusy] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
   const [resolveHours, setResolveHours] = useState("");
+  const [resolveText, setResolveText] = useState("");
   const [resolveError, setResolveError] = useState<string | null>(null);
+  const [attKey, setAttKey] = useState(0);
+  const resolveEv = useEvidence();
 
   const canEdit = can("edit", "ticket");
   const canConvert = can("create", "story");
@@ -111,30 +116,50 @@ export function TicketDetail({
   }
 
   // Cambio de estado: si pasa a RESUELTO por primera vez, el desarrollador
-  // debe indicar cuántas horas le tomó — abrimos un pequeño modal.
+  // debe registrar horas, solución y evidencia — abrimos el modal.
   function onChangeStatus(next: string) {
     if (next === "RESOLVED" && d && d.status !== "RESOLVED") {
       setResolveHours("");
+      setResolveText("");
       setResolveError(null);
+      resolveEv.reset();
       setResolveOpen(true);
       return;
     }
     patch({ status: next });
   }
-  async function submitResolve() {
+  async function submitResolve(e?: React.FormEvent) {
+    e?.preventDefault();
     const hours = Number(resolveHours);
     if (!Number.isFinite(hours) || hours <= 0) {
       setResolveError("Indica cuántas horas te tomó (mayor a 0).");
       return;
     }
+    if (!resolveText.trim()) {
+      setResolveError("Describe la solución aplicada.");
+      return;
+    }
+    let picked: { files: File[]; links: string[] };
+    try {
+      picked = resolveEv.collect();
+    } catch (err) {
+      setResolveError(err instanceof Error ? err.message : "Evidencia inválida");
+      return;
+    }
     setBusy(true);
     setResolveError(null);
     try {
+      // 1) Evidencia → adjuntos del caso. 2) Resolver con horas + solución.
+      const up = await uploadEvidence("ticket", ticketId, picked.files, picked.links);
+      if (up.failed === up.total) throw new Error(up.firstError ?? "No se pudo subir la evidencia");
       await apiSend(`/api/tickets/${ticketId}`, "PATCH", {
         status: "RESOLVED",
         resolutionHours: hours,
+        resolution: resolveText.trim(),
       });
       setResolveOpen(false);
+      resolveEv.reset();
+      setAttKey((k) => k + 1);
       await load();
     } catch (err) {
       setResolveError(err instanceof Error ? err.message : "Error");
@@ -211,6 +236,20 @@ export function TicketDetail({
           {d.description}
         </div>
 
+        {/* Solución aplicada (visible para cliente y staff una vez resuelto) */}
+        {d.resolution && (
+          <div className="rounded-2xl border border-success/30 bg-success/5 p-4">
+            <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-success">Solución</h2>
+            <p className="text-sm whitespace-pre-wrap">{d.resolution}</p>
+            {d.resolvedAt && (
+              <p className="mt-2 text-xs text-muted">
+                Resuelto el {new Date(d.resolvedAt).toLocaleString("es", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                {d.assignee && ` por ${d.assignee.name}`}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Conversación */}
         <section>
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Conversación</h2>
@@ -275,7 +314,7 @@ export function TicketDetail({
             desde /report-bug guardan aquí su captura. */}
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Adjuntos</h2>
-          <Attachments entityType="ticket" entityId={d.id} canEdit={canEdit} />
+          <Attachments entityType="ticket" entityId={d.id} canEdit={canEdit} reloadKey={attKey} />
         </div>
 
         {/* Tiempo de ejecución registrado (solo staff) */}
@@ -389,27 +428,51 @@ export function TicketDetail({
       </Modal>
 
       {/* Al pasar a RESUELTO: el desarrollador declara MANUALMENTE cuántas
-          horas le tomó. Ese tiempo alimenta el registro (TicketWorkLog) y
-          resta capacidad del día en la planeación. */}
-      <Modal open={resolveOpen} onClose={() => setResolveOpen(false)} title="Resolver el caso">
+          horas le tomó (alimenta TicketWorkLog y resta capacidad del día),
+          describe la solución aplicada y adjunta evidencia (archivo o enlace). */}
+      <Modal open={resolveOpen} onClose={() => setResolveOpen(false)} title="Resolver el caso" wide>
         <p className="mb-3 text-sm text-muted">
-          Indica cuántas horas te tomó resolverlo. Se registrará como tu tiempo dedicado a este caso.
+          Registra el tiempo dedicado, la solución aplicada y la evidencia. La solución quedará visible para el cliente.
         </p>
-        <label className="mb-1 block text-xs text-muted">Horas dedicadas *</label>
-        <input
-          type="number"
-          min="0"
-          step="0.25"
-          autoFocus
-          value={resolveHours}
-          onChange={(e) => setResolveHours(e.target.value)}
-          placeholder="Ej: 1.5"
-          className="w-full rounded-lg border border-border-strong bg-background px-3 py-2 text-sm outline-none focus:border-brand"
-        />
-        {resolveError && <p className="mt-2 text-xs text-danger">{resolveError}</p>}
-        <Button onClick={submitResolve} loading={busy} className="mt-3 w-full">
-          Marcar como resuelto
-        </Button>
+        {(resolveError ?? resolveEv.error) && (
+          <p className="mb-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger">
+            {resolveError ?? resolveEv.error}
+          </p>
+        )}
+        <form onSubmit={submitResolve} onPaste={resolveEv.handlePaste} className="space-y-4">
+          <div>
+            <label htmlFor="resolve-hours" className="mb-1 block text-xs text-muted">Horas dedicadas *</label>
+            <input
+              id="resolve-hours"
+              type="number"
+              min="0"
+              step="0.25"
+              autoFocus
+              value={resolveHours}
+              onChange={(e) => setResolveHours(e.target.value)}
+              placeholder="Ej: 1.5"
+              className="w-full rounded-lg border border-border-strong bg-background px-3 py-2 text-sm outline-none focus:border-brand"
+            />
+          </div>
+          <div>
+            <label htmlFor="resolve-text" className="mb-1 block text-xs text-muted">Solución aplicada *</label>
+            <Textarea
+              id="resolve-text"
+              value={resolveText}
+              onChange={(e) => setResolveText(e.target.value)}
+              placeholder="Qué causaba el problema y qué se hizo para resolverlo…"
+            />
+          </div>
+          <div>
+            <label htmlFor="resolve-file" className="mb-1 block text-xs text-muted">
+              Evidencia (archivo o enlace) * <span className="text-muted/70">({resolveEv.count}/{MAX_EVIDENCE})</span>
+            </label>
+            <EvidencePicker ev={resolveEv} idPrefix="resolve" />
+          </div>
+          <Button type="submit" loading={busy} className="w-full">
+            Marcar como resuelto
+          </Button>
+        </form>
       </Modal>
     </div>
   );

@@ -28,6 +28,8 @@ export const ticketUpdateSchema = z.object({
   // Horas que el desarrollador declara haber dedicado a resolver el caso.
   // Se registran cuando el estado pasa a RESUELTO.
   resolutionHours: z.coerce.number().min(0).max(999).optional().nullable(),
+  // Solución aplicada al caso. Obligatoria al pasar a RESUELTO.
+  resolution: z.string().trim().max(4000).optional().nullable(),
 });
 
 export const ticketMessageSchema = z.object({

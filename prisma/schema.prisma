@@ -557,6 +557,7 @@ model Ticket {
   inProgressAt       DateTime? // cuándo empezó la ejecución (primer paso a EN PROCESO)
   resolvedAt         DateTime?
   closedAt           DateTime?
+  resolution         String? // solución aplicada; se exige al pasar a RESUELTO
 
   // Trazabilidad soporte -> historia
   linkedStoryId String?
