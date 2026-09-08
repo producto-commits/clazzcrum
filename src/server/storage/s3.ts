@@ -16,7 +16,20 @@ const client = new S3Client({
     accessKeyId: process.env.S3_ACCESS_KEY ?? "",
     secretAccessKey: process.env.S3_SECRET_KEY ?? "",
   },
+  // Desde @aws-sdk/client-s3 3.729 el SDK añade checksums (CRC32/CRC64NVME,
+  // aws-chunked con trailers) a todas las escrituras. MinIO y otros
+  // almacenamientos compatibles los rechazan con "InvalidRequest". Solo
+  // calcular/validar checksums cuando la operación lo exige.
+  requestChecksumCalculation: "WHEN_REQUIRED",
+  responseChecksumValidation: "WHEN_REQUIRED",
 });
+
+// Nombre + código HTTP de un error del SDK, para diagnósticos legibles.
+function describeErr(err: unknown): string {
+  const e = err as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+  const status = e?.$metadata?.httpStatusCode;
+  return `${e?.name ?? "Error"}${status ? ` (HTTP ${status})` : ""}${e?.message ? `: ${e.message}` : ""}`;
+}
 
 const BUCKET = process.env.S3_BUCKET ?? "clazz-uploads";
 
@@ -41,8 +54,10 @@ async function ensureBucket() {
         bucketReady = true;
         return;
       }
-      // eslint-disable-next-line no-console
-      console.error("[s3] No se pudo asegurar el bucket:", code, createErr, "(head:", (headErr as { name?: string })?.name, ")");
+      console.error(
+        `[s3] No se pudo asegurar el bucket "${BUCKET}" en ${process.env.S3_ENDPOINT ?? "(sin S3_ENDPOINT)"}` +
+          ` — HeadBucket: ${describeErr(headErr)} — CreateBucket: ${describeErr(createErr)}`,
+      );
       throw new Error(
         `Almacenamiento no disponible (bucket ${BUCKET}): ${code || (createErr as Error).message}`,
       );
