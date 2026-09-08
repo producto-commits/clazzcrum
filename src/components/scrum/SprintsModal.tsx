@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/Inputs";
 import type { Sprint } from "@/lib/scrumTypes";
 
 function fmt(d: string) {
-  return new Date(d).toLocaleDateString("es");
+  // Fechas de sprint guardadas como día UTC — formatear en UTC evita corrimiento.
+  return new Date(d).toLocaleDateString("es", { timeZone: "UTC" });
 }
 
 type EditForm = { name: string; goal: string; capacity: string };

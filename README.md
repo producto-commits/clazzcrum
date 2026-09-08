@@ -1,7 +1,7 @@
 # Clazz — Plataforma SCRUM + Mesa de Servicio
 
 App web (Next.js) para gestión ágil de proyectos y mesa de servicio.
-Ver el diseño y plan de fases en [`../DISENO_Y_PLAN.md`](../DISENO_Y_PLAN.md).
+Ver el diseño y plan de fases en [`DISENO_Y_PLAN.md`](DISENO_Y_PLAN.md).
 
 ## Stack
 

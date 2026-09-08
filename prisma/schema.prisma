@@ -377,6 +377,10 @@ model UserStory {
 
   startDate    DateTime?
   estimatedEnd DateTime?
+  // Cuando true, el motor de planificación NO recalcula estas fechas: quedan
+  // ancladas manualmente. Se marca automáticamente al editar startDate/estimatedEnd
+  // desde la UI y se libera con "Volver al cálculo automático".
+  datesLocked  Boolean   @default(false)
   actualEnd    DateTime?
   completionEvidence String? // descripción de la evidencia al completar
 
@@ -673,6 +677,9 @@ model Attachment {
   mimeType   String
   size       Int
   storageKey String
+  // Evidencia por enlace: cuando url != null no hay objeto en el storage
+  // (storageKey queda vacío, size 0, mimeType "text/uri-list").
+  url        String?
   uploadedById String?
   uploadedBy   User?  @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt  DateTime @default(now())

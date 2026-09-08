@@ -23,7 +23,7 @@ type Dev = {
   jobTitle: string | null;
   projects: ProjChip[];
   yesterday: { done: Story[]; meetings: Meet[]; tickets: Tix[] };
-  today: { planned: Story[]; meetings: Meet[]; tickets: Tix[] };
+  today: { planned: Story[]; done: Story[]; meetings: Meet[]; tickets: Tix[] };
   blocked: Block[];
 };
 type Daily = {
@@ -31,7 +31,7 @@ type Daily = {
   yesterday: string;
   isToday: boolean;
   developers: Dev[];
-  totals: { yesterdayDone: number; todayPlanned: number; blocked: number };
+  totals: { yesterdayDone: number; todayDone: number; todayPlanned: number; blocked: number };
   projects: { id: string; name: string; plannedEndAt: string | null; total: number; done: number }[];
 };
 
@@ -202,16 +202,33 @@ export default function DailyPage() {
                 </div>
               )}
 
-              {/* Dos columnas grandes: AYER y HOY */}
-              <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <DayColumn
-                  header="Ayer"
-                  headerNote="Lo ejecutado y atendido"
-                  activityTitle="Ejecutadas"
-                  activities={dev.yesterday.done}
-                  meetings={dev.yesterday.meetings}
-                  tickets={dev.yesterday.tickets}
-                />
+              {/* Dos columnas grandes: AYER y HOY. Bajo "Ayer" se apila
+                  "Completadas hoy" dentro de la misma columna izquierda, para
+                  que quede al costado de "Hoy" (que suele ser más alto). */}
+              <div className="mt-4 grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+                <div className="space-y-4">
+                  <DayColumn
+                    header="Ayer"
+                    headerNote="Lo ejecutado y atendido"
+                    activityTitle="Ejecutadas"
+                    activities={dev.yesterday.done}
+                    meetings={dev.yesterday.meetings}
+                    tickets={dev.yesterday.tickets}
+                  />
+                  {dev.today.done.length > 0 && (
+                    <div>
+                      <div className="mb-2 flex items-baseline gap-2">
+                        <p className="text-sm font-semibold text-success">Completadas hoy ({dev.today.done.length})</p>
+                        <p className="text-[10px] uppercase tracking-wide text-muted">Ya cerradas en el día</p>
+                      </div>
+                      <div className="space-y-1.5 rounded-xl border border-success/30 bg-success/5 p-3">
+                        {dev.today.done.map((s) => (
+                          <StoryLine key={s.id} s={s} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <DayColumn
                   header="Hoy"
                   headerNote="Lo que toca"
@@ -346,7 +363,7 @@ function StoryLine({ s, bare }: { s: Story | Block; bare?: boolean }) {
   if (bare) return <div className="flex items-start gap-1.5">{body}</div>;
   return (
     <Link
-      href={`/projects/${s.project.id}`}
+      href={`/projects/${s.project.id}?story=${s.id}`}
       className="flex items-start gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 transition hover:border-brand/40"
     >
       {body}

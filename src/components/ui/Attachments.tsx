@@ -8,6 +8,7 @@ type Attachment = {
   fileName: string;
   mimeType: string;
   size: number;
+  url: string | null; // evidencia por enlace (sin archivo en el storage)
   createdAt: string;
   uploadedBy: { id: string; name: string } | null;
 };
@@ -19,6 +20,7 @@ function humanSize(n: number) {
 }
 
 function fileIcon(mime: string) {
+  if (mime === "text/uri-list") return "🔗";
   if (mime.startsWith("image/")) return "🖼";
   if (mime === "application/pdf") return "📄";
   if (mime.includes("sheet") || mime.includes("excel")) return "📊";
@@ -88,15 +90,15 @@ export function Attachments({
           <div key={a.id} className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-2.5 py-1.5 text-sm">
             <span aria-hidden>{fileIcon(a.mimeType)}</span>
             <a
-              href={`/api/attachments/${a.id}`}
+              href={a.url ?? `/api/attachments/${a.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="min-w-0 flex-1 truncate hover:text-brand hover:underline"
-              title={a.fileName}
+              title={a.url ?? a.fileName}
             >
               {a.fileName}
             </a>
-            <span className="shrink-0 text-xs text-muted">{humanSize(a.size)}</span>
+            <span className="shrink-0 text-xs text-muted">{a.url ? "enlace" : humanSize(a.size)}</span>
             {canEdit && (
               <button
                 onClick={() => remove(a.id)}

@@ -60,19 +60,25 @@ export async function POST(req: Request) {
   const priority = parsed.data.priority ?? "MEDIUM";
   const sla = await computeSlaDueDates(priority);
 
-  // Auto-asignación: buscar el desarrollador (o líder técnico) con mayor
-  // dedicación a algún proyecto activo de este cliente. Así el ticket cae
-  // directo en la bandeja de quien conoce el proyecto.
-  const candidates = await prisma.projectAssignment.findMany({
-    where: {
-      project: { clientId, status: { in: ["PLANNING", "ACTIVE"] } },
-      user: { isActive: true, roles: { some: { role: { key: { in: ["developer", "tech_lead"] } } } } },
-    },
-    orderBy: [{ dedicationPct: "desc" }, { priority: "asc" }],
-    select: { userId: true },
-    take: 1,
-  });
-  const autoAssignee = candidates[0]?.userId ?? null;
+  // Auto-asignación:
+  // 1) Si quien crea el ticket es developer, queda asignado a él (crea = suyo).
+  // 2) Si no, buscar el developer/tech_lead con mayor dedicación a un proyecto
+  //    activo de este cliente, para que caiga en la bandeja de quien lo conoce.
+  let autoAssignee: string | null = null;
+  if (auth.session.roles.includes("developer")) {
+    autoAssignee = auth.session.userId;
+  } else {
+    const candidates = await prisma.projectAssignment.findMany({
+      where: {
+        project: { clientId, status: { in: ["PLANNING", "ACTIVE"] } },
+        user: { isActive: true, roles: { some: { role: { key: { in: ["developer", "tech_lead"] } } } } },
+      },
+      orderBy: [{ dedicationPct: "desc" }, { priority: "asc" }],
+      select: { userId: true },
+      take: 1,
+    });
+    autoAssignee = candidates[0]?.userId ?? null;
+  }
 
   const ticket = await prisma.ticket.create({
     data: {

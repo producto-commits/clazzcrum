@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { requirePermission } from "@/server/auth/guard";
+import { resolveScope } from "@/server/auth/scope";
 import { ok, fail } from "@/server/http";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,6 +12,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   const auth = await requirePermission("read", "project");
   if (auth instanceof NextResponse) return auth;
   const { id } = await params;
+  const scope = await resolveScope(auth.session);
 
   const project = await prisma.project.findUnique({
     where: { id },
@@ -18,11 +20,19 @@ export async function GET(_req: Request, { params }: Ctx) {
   });
   if (!project) return fail("Proyecto no encontrado", 404);
 
+  // Developer: solo ve las actividades que le fueron asignadas — un mismo
+  // proyecto puede tenerlas repartidas entre varios developers y no queremos
+  // que uno vea el trabajo del otro en su vista de Sprints.
+  const storiesWhere = scope.assignedOnly
+    ? { assignees: { some: { userId: scope.userId } } }
+    : undefined;
+
   const sprints = await prisma.planSprint.findMany({
     where: { projectId: id },
     orderBy: { index: "asc" },
     include: {
       stories: {
+        where: storiesWhere,
         select: {
           id: true,
           title: true,
@@ -53,11 +63,19 @@ export async function GET(_req: Request, { params }: Ctx) {
   });
 
   // Actividades sin planificar (sin responsable o sin horas), para avisar.
+  // Para el developer solo tiene sentido contar sus propias sin horas.
   const unplanned = await prisma.userStory.count({
     where: {
       projectId: id,
       status: { not: "DONE" },
-      OR: [{ assignees: { none: {} } }, { estimateHours: null }, { estimateHours: { lte: 0 } }],
+      ...(scope.assignedOnly
+        ? {
+            assignees: { some: { userId: scope.userId } },
+            OR: [{ estimateHours: null }, { estimateHours: { lte: 0 } }],
+          }
+        : {
+            OR: [{ assignees: { none: {} } }, { estimateHours: null }, { estimateHours: { lte: 0 } }],
+          }),
     },
   });
 

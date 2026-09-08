@@ -16,6 +16,9 @@ export async function GET(req: Request, { params }: Ctx) {
   const att = await prisma.attachment.findUnique({ where: { id } });
   if (!att) return fail("Adjunto no encontrado", 404);
 
+  // Evidencia por enlace: no hay archivo, redirigimos al destino.
+  if (att.url) return NextResponse.redirect(att.url, 302);
+
   const inline = new URL(req.url).searchParams.get("inline") === "1";
   const obj = await getObject(att.storageKey);
   return new Response(obj.body, {
@@ -35,7 +38,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const att = await prisma.attachment.findUnique({ where: { id } });
   if (!att) return fail("Adjunto no encontrado", 404);
 
-  await deleteObject(att.storageKey);
+  if (att.storageKey) await deleteObject(att.storageKey); // los enlaces no tienen objeto
   await prisma.attachment.delete({ where: { id } });
   await writeAudit({
     userId: auth.session.userId,

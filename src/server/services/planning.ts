@@ -135,6 +135,28 @@ export async function replanProject(projectId: string): Promise<ReplanResult> {
     if (s.status === "DONE") continue; // conserva sus fechas reales
     const assignee = s.assignees[0]?.userId;
     const hours = s.estimateHours ?? 0;
+
+    // Fechas ancladas manualmente: no se recalculan. Se conservan tal cual,
+    // y el cursor del responsable salta al siguiente hábil después del fin
+    // ancladopara no encimarle otra actividad.
+    if (s.datesLocked && s.startDate && s.estimatedEnd) {
+      const sDate = atMidnightUTC(s.startDate);
+      const eDate = atMidnightUTC(s.estimatedEnd);
+      updates.push({ id: s.id, startDate: sDate, estimatedEnd: eDate });
+      if (!projectEnd || eDate > projectEnd) projectEnd = eDate;
+      planned++;
+      if (assignee) {
+        const st = cursor.get(assignee) ?? { day: nextWorkday(start, holidays), used: 0 };
+        const jumpTo = nextWorkday(addDays(eDate, 1), holidays);
+        if (jumpTo > st.day) {
+          st.day = jumpTo;
+          st.used = 0;
+        }
+        cursor.set(assignee, st);
+      }
+      continue;
+    }
+
     if (!assignee || hours <= 0) {
       unplanned++;
       continue;

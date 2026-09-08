@@ -39,20 +39,37 @@ export type Story = {
 // Estado de cumplimiento según fecha de fin planeada vs. realidad.
 export type Compliance = "ontime" | "due_soon" | "overdue" | "late" | "none";
 
+// Día calendario en Bogota (YYYY-MM-DD). Todas las comparaciones de
+// cumplimiento se hacen a nivel de día — no de hora — para evitar que una
+// tarea de "hoy" aparezca atrasada por la diferencia UTC↔Bogota (UTC-5).
+function dayKeyBogota(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "America/Bogota" });
+}
+// Las fechas del motor se guardan como "día UTC" a medianoche (ej. 2026-08-05T00:00:00Z),
+// así que el día representado es directamente el slice(0, 10) del ISO.
+function dayKeyUTC(iso: string): string {
+  return iso.slice(0, 10);
+}
+function daysBetween(a: string, b: string): number {
+  const ta = Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10));
+  const tb = Date.UTC(+b.slice(0, 4), +b.slice(5, 7) - 1, +b.slice(8, 10));
+  return Math.round((tb - ta) / 86_400_000);
+}
+
 export function storyCompliance(
   status: string,
   estimatedEnd: string | null,
   actualEnd: string | null,
 ): Compliance {
   if (!estimatedEnd) return "none";
-  const end = new Date(estimatedEnd).getTime();
+  const endDay = dayKeyUTC(estimatedEnd);
   if (status === "DONE") {
-    const done = actualEnd ? new Date(actualEnd).getTime() : Date.now();
-    return done > end ? "late" : "ontime";
+    const doneDay = actualEnd ? dayKeyUTC(actualEnd) : dayKeyBogota(new Date());
+    return doneDay > endDay ? "late" : "ontime";
   }
-  const now = Date.now();
-  if (now > end) return "overdue";
-  if (end - now < 2 * 24 * 60 * 60 * 1000) return "due_soon"; // < 2 días
+  const today = dayKeyBogota(new Date());
+  if (today > endDay) return "overdue";
+  if (daysBetween(today, endDay) < 2) return "due_soon"; // hoy o mañana
   return "ontime";
 }
 

@@ -42,6 +42,21 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const { assigneeIds, ...rest } = parsed.data;
   const data: Prisma.UserStoryUncheckedUpdateInput = { ...rest };
 
+  // Fechas manuales vs motor de planificación:
+  //   - Si el request incluye startDate o estimatedEnd (y no dice explícitamente
+  //     datesLocked=false), la actividad queda ANCLADA: el motor no vuelve a
+  //     tocar esas fechas hasta que el usuario "vuelva al cálculo automático".
+  //   - "Volver al cálculo automático" = enviar datesLocked=false; limpiamos
+  //     startDate/estimatedEnd para que el próximo replan las recalcule.
+  const sentDates = rest.startDate !== undefined || rest.estimatedEnd !== undefined;
+  if (rest.datesLocked === false) {
+    data.datesLocked = false;
+    data.startDate = null;
+    data.estimatedEnd = null;
+  } else if (sentDates) {
+    data.datesLocked = true;
+  }
+
   // Jerarquía anidada: al cambiar de épica, la historia hereda el sprint de esa épica.
   if (rest.epicId !== undefined) {
     if (rest.epicId) {
@@ -63,7 +78,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     });
 
     if (data.status === "DONE" && current?.status !== "DONE") {
-      // Evidencia obligatoria: descripción + al menos un adjunto.
+      // Evidencia obligatoria: descripción + al menos un adjunto (archivo o enlace).
       const evidence = (rest.completionEvidence ?? current?.completionEvidence ?? "").trim();
       if (!evidence) {
         return fail("Para completar la historia debes describir la evidencia", 422, {
@@ -74,7 +89,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
         where: { entityType: "story", entityId: id },
       });
       if (attachments === 0) {
-        return fail("Para completar la historia debes adjuntar al menos una evidencia", 422, {
+        return fail("Para completar la historia debes adjuntar al menos un archivo o enlace de evidencia", 422, {
           requiresEvidence: true,
         });
       }

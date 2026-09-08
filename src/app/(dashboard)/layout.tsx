@@ -32,8 +32,12 @@ export default async function DashboardLayout({
 
   const items: NavItem[] = [{ href: "/dashboard", label: t.nav.dashboard, icon: "dashboard" }];
   if (can("project")) items.push({ href: "/projects", label: t.nav.projects, icon: "projects" });
+  // Daily: los líderes ven el daily del equipo completo; los developers ven
+  // solo el suyo (la API filtra por su userId cuando el scope es assignedOnly).
+  if (isStaff) items.push({ href: "/daily", label: "Daily", icon: "dashboard" });
+  // Carga por persona: solo líderes (asignaciones vs. capacidad semanal).
   const isLead = user.roles.some((r) => ["admin", "tech_lead"].includes(r.role.key));
-  if (isLead) items.push({ href: "/daily", label: "Daily", icon: "dashboard" });
+  if (isLead) items.push({ href: "/workload", label: "Carga", icon: "team" });
   if (isStaff) items.push({ href: "/meetings", label: "Reuniones", icon: "meetings" });
   if (can("ticket")) items.push({ href: "/service-desk", label: t.nav.serviceDesk, icon: "service" });
   if (can("design_doc")) items.push({ href: "/discovery", label: t.nav.discovery, icon: "discovery" });

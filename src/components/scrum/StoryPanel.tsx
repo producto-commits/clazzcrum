@@ -39,6 +39,7 @@ type Detail = {
   sprintId: string | null;
   startDate: string | null;
   estimatedEnd: string | null;
+  datesLocked: boolean;
   actualEnd: string | null;
   blockReason: string | null;
   blockedAt: string | null;
@@ -98,6 +99,11 @@ export function StoryPanel({
     if (!d) return;
     setSaving(true);
     try {
+      // Fechas: solo se envían si el usuario las está anclando (datesLocked=true).
+      // Si no, el motor manda; enviarlas aquí las volvería a anclar en cada guardado.
+      const dateFields = d.datesLocked
+        ? { startDate: d.startDate, estimatedEnd: d.estimatedEnd, datesLocked: true }
+        : {};
       await apiSend(`/api/stories/${d.id}`, "PATCH", {
         title: d.title,
         description: d.description,
@@ -111,6 +117,7 @@ export function StoryPanel({
         sprintId: d.sprintId || null,
         tags: tagsText.split(",").map((t) => t.trim()).filter(Boolean),
         assigneeIds: d.assignees.map((a) => a.user.id),
+        ...dateFields,
       });
       await load();
       onChanged();
@@ -320,23 +327,65 @@ export function StoryPanel({
               </div>
             </div>
 
-            {/* Fechas calculadas por el motor de planificación (solo lectura) */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <label className="mb-1 block text-xs text-muted">Inicio probable (calculado)</label>
-                <input type="date" disabled readOnly value={toDateInput(d.startDate)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 opacity-70" />
+            {/* Fechas: por defecto las calcula el motor. El usuario puede
+                editarlas → quedan ANCLADAS (🔒) y el motor deja de tocarlas.
+                "Volver al cálculo automático" las libera y las recalcula. */}
+            <div className="text-sm">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-xs text-muted">
+                  {d.datesLocked ? "🔒 Fechas ancladas" : "Fechas calculadas por el motor"}
+                </span>
+                {canEdit && d.datesLocked && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await apiSend(`/api/stories/${d.id}`, "PATCH", { datesLocked: false });
+                      await load();
+                      onChanged();
+                    }}
+                    className="text-xs text-brand hover:underline"
+                  >
+                    Volver al cálculo automático
+                  </button>
+                )}
               </div>
-              <div>
-                <label className="mb-1 block text-xs text-muted">Cierre probable (calculado)</label>
-                <input type="date" disabled readOnly value={toDateInput(d.estimatedEnd)}
-                  className="w-full rounded-lg border border-border bg-background px-3 py-2 opacity-70" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs text-muted">
+                    {d.datesLocked ? "Inicio" : "Inicio probable"}
+                  </label>
+                  <input
+                    type="date"
+                    disabled={!canEdit}
+                    value={toDateInput(d.startDate)}
+                    onChange={(e) => {
+                      const v = e.target.value ? new Date(e.target.value + "T00:00:00.000Z").toISOString() : null;
+                      setD((prev) => (prev ? { ...prev, startDate: v, datesLocked: true } : prev));
+                    }}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 disabled:opacity-70"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs text-muted">
+                    {d.datesLocked ? "Cierre" : "Cierre probable"}
+                  </label>
+                  <input
+                    type="date"
+                    disabled={!canEdit}
+                    value={toDateInput(d.estimatedEnd)}
+                    onChange={(e) => {
+                      const v = e.target.value ? new Date(e.target.value + "T00:00:00.000Z").toISOString() : null;
+                      setD((prev) => (prev ? { ...prev, estimatedEnd: v, datesLocked: true } : prev));
+                    }}
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 disabled:opacity-70"
+                  />
+                </div>
               </div>
               {d.actualEnd && (
-                <div className="col-span-2 text-xs text-muted">
+                <div className="mt-2 text-xs text-muted">
                   Completada el{" "}
                   <span className="font-medium text-foreground">
-                    {new Date(d.actualEnd).toLocaleDateString("es")}
+                    {new Date(d.actualEnd).toLocaleDateString("es", { timeZone: "UTC" })}
                   </span>
                 </div>
               )}

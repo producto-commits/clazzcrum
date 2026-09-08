@@ -15,6 +15,7 @@ const storySelect = {
   estimateHours: true,
   estimatedEnd: true,
   startDate: true,
+  datesLocked: true,
   blockReason: true,
   blockedDays: true,
   actualEnd: true,
@@ -98,30 +99,15 @@ export async function GET(_req: Request, { params }: Ctx) {
     }
   }
 
-  // Sprints ▸ epics ▸ stories, después de filtrar historias.
-  let sprintsOut = sprints.map((sp) => ({ ...sp, epics: epicsBySprint.get(sp.id) ?? [] }));
-  let looseEpicsOut = looseEpics;
-
-  // Para el desarrollador (assignedOnly): oculta épicas y sprints en los que
-  // no tenga participación real. Se considera "suyo" un elemento si:
-  //   · tiene actividades asignadas a él, o
-  //   · él es el encargado (ownerId), o
-  //   · él lo creó (createdById).
-  // Así, todo hito/fase que se crea en un proyecto asignado al dev queda
-  // visible para él aunque aún no haya actividades adentro.
-  if (scope.assignedOnly) {
-    const uid = scope.userId;
-    const isMine = (e: { ownerId: string | null; createdById: string | null; stories: unknown[] }) =>
-      e.stories.length > 0 || e.ownerId === uid || e.createdById === uid;
-    sprintsOut = sprintsOut
-      .map((sp) => ({ ...sp, epics: sp.epics.filter(isMine) }))
-      .filter((sp) => sp.epics.length > 0 || sp.ownerId === uid || sp.createdById === uid);
-    looseEpicsOut = looseEpicsOut.filter(isMine);
-  }
+  // Sprints ▸ epics ▸ stories. Al developer (assignedOnly) le filtramos SOLO
+  // las actividades (se hizo en la query), pero conservamos TODOS los hitos y
+  // fases del proyecto para que tenga el contexto completo — Diego así lo
+  // pidió (2026-08-05). Los hitos y fases sin actividades suyas se ven vacíos.
+  const sprintsOut = sprints.map((sp) => ({ ...sp, epics: epicsBySprint.get(sp.id) ?? [] }));
 
   return ok({
     sprints: sprintsOut,
-    looseEpics: looseEpicsOut,
+    looseEpics,
     looseStories,
   });
 }

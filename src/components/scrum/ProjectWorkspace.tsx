@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { apiGet, apiSend } from "@/lib/api";
 import { useMe } from "@/lib/useMe";
 import { Button } from "@/components/ui/Field";
@@ -76,6 +77,15 @@ export function ProjectWorkspace({ projectId }: { projectId: string }) {
   const [openTeam, setOpenTeam] = useState(false);
   const [openMove, setOpenMove] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  // Al llegar desde el Daily (o cualquier link con ?story=<id>) abrimos el
+  // panel de esa tarea al montar. Solo la primera vez para no reabrirlo si
+  // el usuario lo cerró.
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    const s = searchParams.get("story");
+    if (s) setSelected(s);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [completeStory, setCompleteStory] = useState<{ id: string; title: string } | null>(null);
   const [blockStory, setBlockStory] = useState<{ id: string; title: string } | null>(null);
 

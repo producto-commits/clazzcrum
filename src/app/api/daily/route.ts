@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/server/db";
 import { requireStaff } from "@/server/auth/portal";
-import { ok, fail } from "@/server/http";
+import { ok } from "@/server/http";
 
 // GET /api/daily?date=YYYY-MM-DD — Daily del líder.
 // Muestra, por desarrollador, dos días: el DÍA ANTERIOR (lo que se ejecutó,
@@ -11,7 +11,13 @@ import { ok, fail } from "@/server/http";
 export async function GET(req: Request) {
   const auth = await requireStaff();
   if (auth instanceof NextResponse) return auth;
-  if (auth.scope.assignedOnly) return fail("Solo para líderes y administradores", 403);
+
+  // Alcance:
+  //   - Líderes (admin/tech_lead): ven el daily del equipo completo.
+  //   - Developer (assignedOnly=true): ve SOLO lo suyo — historias asignadas,
+  //     reuniones en las que participa, tickets asignados.
+  const onlyMine = auth.scope.assignedOnly;
+  const meId = auth.scope.userId;
 
   const now = new Date();
   const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -24,7 +30,36 @@ export async function GET(req: Request) {
       today = parsed.getTime() > todayUTC.getTime() ? todayUTC : parsed;
     }
   }
-  const yest = new Date(today.getTime() - 86400000);
+  // "Ayer" = último día HÁBIL antes de hoy: salta fines de semana y festivos.
+  // Así los lunes muestran el viernes, y un martes con lunes festivo muestra
+  // el viernes también.
+  const y = today.getUTCFullYear();
+  const holidayRows = await prisma.holiday.findMany({
+    where: {
+      date: {
+        gte: new Date(Date.UTC(y - 1, 0, 1)),
+        lt: new Date(Date.UTC(y + 1, 0, 1)),
+      },
+    },
+    select: { date: true },
+  });
+  const holidays = new Set(
+    holidayRows.map((h) =>
+      new Date(Date.UTC(h.date.getUTCFullYear(), h.date.getUTCMonth(), h.date.getUTCDate()))
+        .toISOString()
+        .slice(0, 10),
+    ),
+  );
+  const isWorkDay = (d: Date) => {
+    const dow = d.getUTCDay();
+    if (dow === 0 || dow === 6) return false;
+    return !holidays.has(d.toISOString().slice(0, 10));
+  };
+  let yest = new Date(today.getTime() - 86400000);
+  let guard = 0;
+  while (!isWorkDay(yest) && guard++ < 30) {
+    yest = new Date(yest.getTime() - 86400000);
+  }
   const todayEnd = new Date(today.getTime() + 86400000);
 
   const storySel = {
@@ -47,13 +82,19 @@ export async function GET(req: Request) {
   const [stories, tixYest, tixToday, meetings, projects] = await Promise.all([
     // Todas las actividades de proyectos activos (para saber avance y encajar por fecha).
     prisma.userStory.findMany({
-      where: { project: { status: { in: ["PLANNING", "ACTIVE"] } } },
+      where: {
+        project: { status: { in: ["PLANNING", "ACTIVE"] } },
+        ...(onlyMine ? { assignees: { some: { userId: meId } } } : {}),
+      },
       select: storySel,
       take: 5000,
     }),
     // Tickets resueltos AYER.
     prisma.ticket.findMany({
-      where: { resolvedAt: { gte: yest, lt: today } },
+      where: {
+        resolvedAt: { gte: yest, lt: today },
+        ...(onlyMine ? { assigneeId: meId } : {}),
+      },
       select: {
         id: true, number: true, subject: true, priority: true,
         assignee: { select: { id: true, name: true } },
@@ -69,6 +110,7 @@ export async function GET(req: Request) {
           { resolutionDueAt: { gte: today, lt: todayEnd } },
           { firstResponseDueAt: { gte: today, lt: todayEnd } },
         ],
+        ...(onlyMine ? { assigneeId: meId } : {}),
       },
       select: {
         id: true, number: true, subject: true, priority: true, status: true,
@@ -77,14 +119,27 @@ export async function GET(req: Request) {
     }),
     // Reuniones del rango [ayer, hoy].
     prisma.meeting.findMany({
-      where: { date: { gte: yest, lt: todayEnd } },
+      where: {
+        date: { gte: yest, lt: todayEnd },
+        ...(onlyMine ? { attendees: { some: { userId: meId } } } : {}),
+      },
       select: {
         id: true, title: true, date: true, hours: true,
         attendees: { select: { user: { select: { id: true, name: true } } } },
       },
     }),
     prisma.project.findMany({
-      where: { status: { in: ["PLANNING", "ACTIVE"] } },
+      where: {
+        status: { in: ["PLANNING", "ACTIVE"] },
+        ...(onlyMine
+          ? {
+              OR: [
+                { assignments: { some: { userId: meId } } },
+                { stories: { some: { assignees: { some: { userId: meId } } } } },
+              ],
+            }
+          : {}),
+      },
       select: { id: true, name: true, plannedEndAt: true, stories: { select: { status: true } } },
       take: 60,
     }),
@@ -118,7 +173,7 @@ export async function GET(req: Request) {
     jobTitle: string | null;
     projects: Map<string, ProjChip>;
     yesterday: { done: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
-    today: { planned: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
+    today: { planned: StoryOut[]; done: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
     blocked: BlockOut[];
   };
 
@@ -130,7 +185,7 @@ export async function GET(req: Request) {
         id, name, jobTitle,
         projects: new Map(),
         yesterday: { done: [], meetings: [], tickets: [] },
-        today: { planned: [], meetings: [], tickets: [] },
+        today: { planned: [], done: [], meetings: [], tickets: [] },
         blocked: [],
       };
       devs.set(id, d);
@@ -160,9 +215,13 @@ export async function GET(req: Request) {
       ? s.assignees.map((a) => a.user)
       : [{ id: "—", name: "Sin responsable", jobTitle: null }];
 
+    // Mismo criterio para líder y developer: yer=completadas ayer,
+    // hoy=planeadas hoy (dentro de la ventana startDate..estimatedEnd).
+    // También registramos las completadas HOY para mostrarlas debajo de ayer.
     const completedYest =
       s.status === "DONE" && s.actualEnd && s.actualEnd >= yest && s.actualEnd < today;
-    // Planificada para HOY: fecha de inicio ≤ hoy ≤ fecha de fin estimada, y no completada.
+    const completedToday =
+      s.status === "DONE" && s.actualEnd && s.actualEnd >= today && s.actualEnd < todayEnd;
     const plannedToday =
       s.status !== "DONE" && fallsOn(s.startDate, s.estimatedEnd, today, todayEnd);
 
@@ -178,18 +237,21 @@ export async function GET(req: Request) {
       if (s.status === "IN_PROGRESS" || s.status === "BLOCKED") chip.active += 1;
 
       if (completedYest) dev.yesterday.done.push(asStory(s));
+      if (completedToday) dev.today.done.push(asStory(s));
       if (plannedToday) dev.today.planned.push(asStory(s));
       if (s.status === "BLOCKED") dev.blocked.push(asBlock(s));
     }
   }
 
   // Reuniones — repartir por día y por asistente.
+  // Si es developer viendo solo lo suyo, ignoramos a los otros asistentes.
   for (const m of meetings) {
     const isYest = m.date >= yest && m.date < today;
     const isToday = m.date >= today && m.date < todayEnd;
     if (!isYest && !isToday) continue;
     const meet: MeetOut = { id: m.id, title: m.title, date: m.date.toISOString(), hours: m.hours };
     for (const a of m.attendees) {
+      if (onlyMine && a.user.id !== meId) continue;
       const dev = getDev(a.user.id, a.user.name, null);
       (isYest ? dev.yesterday : dev.today).meetings.push(meet);
     }
@@ -198,12 +260,14 @@ export async function GET(req: Request) {
   // Tickets — asignados al dev correspondiente.
   for (const t of tixYest) {
     const uid = t.assignee?.id ?? "—";
+    if (onlyMine && uid !== meId) continue;
     const name = t.assignee?.name ?? "Sin responsable";
     const dev = getDev(uid, name, null);
     dev.yesterday.tickets.push({ id: t.id, number: t.number, subject: t.subject, priority: t.priority });
   }
   for (const t of tixToday) {
     const uid = t.assignee?.id ?? "—";
+    if (onlyMine && uid !== meId) continue;
     const name = t.assignee?.name ?? "Sin responsable";
     const dev = getDev(uid, name, null);
     dev.today.tickets.push({
@@ -225,7 +289,7 @@ export async function GET(req: Request) {
       (d) =>
         d.projects.length > 0 ||
         d.yesterday.done.length || d.yesterday.meetings.length || d.yesterday.tickets.length ||
-        d.today.planned.length || d.today.meetings.length || d.today.tickets.length ||
+        d.today.planned.length || d.today.done.length || d.today.meetings.length || d.today.tickets.length ||
         d.blocked.length,
     )
     .sort(
@@ -237,6 +301,7 @@ export async function GET(req: Request) {
 
   const totals = {
     yesterdayDone: developers.reduce((n, d) => n + d.yesterday.done.length, 0),
+    todayDone: developers.reduce((n, d) => n + d.today.done.length, 0),
     todayPlanned: developers.reduce((n, d) => n + d.today.planned.length, 0),
     blocked: developers.reduce((n, d) => n + d.blocked.length, 0),
   };

@@ -7,6 +7,7 @@ import { useMe } from "@/lib/useMe";
 import { Button } from "@/components/ui/Field";
 import { Select, Textarea, PRIORITY_LABELS, PRIORITY_CLASSES } from "@/components/ui/Inputs";
 import { Modal } from "@/components/ui/Modal";
+import { Attachments } from "@/components/ui/Attachments";
 import {
   TICKET_STATUS_LABELS,
   TICKET_STATUS_CLASSES,
@@ -267,6 +268,14 @@ export function TicketDetail({
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">SLA</h2>
           <SlaBadge label="Primera respuesta" due={d.firstResponseDueAt} done={d.firstRespondedAt} />
           <SlaBadge label="Resolución" due={d.resolutionDueAt} done={d.resolvedAt} />
+        </div>
+
+        {/* Adjuntos: capturas, PDFs, etc. Se muestran a cliente y staff; solo
+            quien tiene edit:ticket puede agregar/quitar. Los bugs reportados
+            desde /report-bug guardan aquí su captura. */}
+        <div className="rounded-2xl border border-border bg-surface p-4">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">Adjuntos</h2>
+          <Attachments entityType="ticket" entityId={d.id} canEdit={canEdit} />
         </div>
 
         {/* Tiempo de ejecución registrado (solo staff) */}

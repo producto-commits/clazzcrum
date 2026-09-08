@@ -69,6 +69,7 @@ export const storyCreateSchema = z.object({
   assigneeIds: z.array(z.string()).max(20).optional(),
   startDate: z.coerce.date().optional().nullable(),
   estimatedEnd: z.coerce.date().optional().nullable(),
+  datesLocked: z.boolean().optional(),
   actualEnd: z.coerce.date().optional().nullable(),
   completionEvidence: z.string().trim().max(4000).optional().nullable(),
   blockReason: z.string().trim().max(1000).optional().nullable(),

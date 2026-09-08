@@ -14,6 +14,7 @@ type SLite = {
   estimateHours: number | null;
   estimatedEnd: string | null;
   startDate?: string | null;
+  datesLocked?: boolean;
   actualEnd: string | null;
   blockReason?: string | null;
   assignees: { user: { id: string; name: string } }[];
@@ -34,7 +35,9 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 function fmt(d: string) {
-  return new Date(d).toLocaleDateString("es", { day: "2-digit", month: "short" });
+  // Las fechas se guardan como "día UTC" a medianoche (motor de planificación).
+  // Formatear en UTC evita que en Colombia (UTC-5) se muestre el día anterior.
+  return new Date(d).toLocaleDateString("es", { day: "2-digit", month: "short", timeZone: "UTC" });
 }
 
 function progressOf(stories: { status: string }[]) {
@@ -61,14 +64,17 @@ function StoryRow({ s, onOpen }: { s: SLite; onOpen: () => void }) {
       className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-background"
     >
       <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: STATUS_DOT[s.status] }} title={STATUS_LABEL[s.status]} />
-      <span className="min-w-0 flex-1 truncate">{s.title}</span>
+      <span className="min-w-0 flex-1 truncate" title={s.title}>{s.title}</span>
       {(c === "overdue" || c === "late") && (
         <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${COMPLIANCE_META[c].cls}`}>⚠ {COMPLIANCE_META[c].label}</span>
       )}
       <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${PRIORITY_CLASSES[s.priority]}`}>{PRIORITY_LABELS[s.priority]}</span>
       {s.startDate && s.estimatedEnd && (
-        <span className="hidden shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted lg:inline" title="Fechas calculadas por el motor">
-          {fmt(s.startDate)} → {fmt(s.estimatedEnd)}
+        <span
+          className="hidden shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[10px] text-muted lg:inline"
+          title={s.datesLocked ? "Fechas ancladas manualmente" : "Fechas calculadas por el motor"}
+        >
+          {s.datesLocked && "🔒 "}{fmt(s.startDate)} → {fmt(s.estimatedEnd)}
         </span>
       )}
       {s.estimateHours != null && <span className="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">{s.estimateHours}h</span>}
@@ -229,7 +235,7 @@ export function ProjectStructure({
             <header className="flex flex-wrap items-center gap-3 border-b border-border bg-surface-2 px-4 py-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-xs font-bold text-brand-fg">H</span>
               <div className="min-w-0">
-                <div className="font-semibold">{sp.name}</div>
+                <div className="truncate font-semibold" title={sp.name}>{sp.name}</div>
                 <div className="text-xs text-muted">
                   {fmt(sp.startDate)} → {fmt(sp.endDate)}
                   {sp.goal && ` · ${sp.goal}`}
@@ -251,8 +257,8 @@ export function ProjectStructure({
                 <div key={e.id} className="rounded-xl border border-border bg-background/40">
                   <div className="flex items-center gap-2 px-3 py-2">
                     <span aria-hidden>📦</span>
-                    <span className="font-medium">{e.title}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] ${PRIORITY_CLASSES[e.priority]}`}>{PRIORITY_LABELS[e.priority]}</span>
+                    <span className="min-w-0 truncate font-medium" title={e.title}>{e.title}</span>
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] ${PRIORITY_CLASSES[e.priority]}`}>{PRIORITY_LABELS[e.priority]}</span>
                     <div className="ml-auto flex items-center gap-2">
                       <div className="hidden w-16 sm:block">
                         <Progress pct={progressOf(e.stories).pct} />
@@ -296,8 +302,8 @@ export function ProjectStructure({
               <div key={e.id} className="rounded-xl border border-border bg-background/40">
                 <div className="flex items-center gap-2 px-3 py-2">
                   <span aria-hidden>📦</span>
-                  <span className="font-medium">{e.title}</span>
-                  <span className="ml-auto text-xs text-muted">{e.stories.length} actividades</span>
+                  <span className="min-w-0 truncate font-medium" title={e.title}>{e.title}</span>
+                  <span className="ml-auto shrink-0 text-xs text-muted">{e.stories.length} actividades</span>
                   {canDeleteEpic && (
                     <button
                       onClick={() => delEpic(e.id, e.title)}
