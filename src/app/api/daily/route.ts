@@ -164,6 +164,7 @@ export async function GET(req: Request) {
     project: { id: string; name: string };
   };
   type BlockOut = StoryOut & { blockReason: string | null; blockedAt: string | null; blockedDays: number };
+  type OverdueOut = StoryOut & { estimatedEnd: string; daysOverdue: number };
   type MeetOut = { id: string; title: string; date: string; hours: number };
   type TixOut = { id: string; number: number | null; subject: string; priority: string; status?: string };
   type ProjChip = { id: string; name: string; total: number; done: number; active: number };
@@ -173,7 +174,7 @@ export async function GET(req: Request) {
     jobTitle: string | null;
     projects: Map<string, ProjChip>;
     yesterday: { done: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
-    today: { planned: StoryOut[]; done: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
+    today: { planned: StoryOut[]; overdue: OverdueOut[]; done: StoryOut[]; meetings: MeetOut[]; tickets: TixOut[] };
     blocked: BlockOut[];
   };
 
@@ -185,7 +186,7 @@ export async function GET(req: Request) {
         id, name, jobTitle,
         projects: new Map(),
         yesterday: { done: [], meetings: [], tickets: [] },
-        today: { planned: [], done: [], meetings: [], tickets: [] },
+        today: { planned: [], overdue: [], done: [], meetings: [], tickets: [] },
         blocked: [],
       };
       devs.set(id, d);
@@ -196,6 +197,12 @@ export async function GET(req: Request) {
   const asStory = (s: (typeof stories)[number]): StoryOut => ({
     id: s.id, title: s.title, status: s.status, priority: s.priority,
     estimateHours: s.estimateHours, project: s.project,
+  });
+  // Vencida: sin completar y con fecha estimada de fin anterior al día del daily.
+  const asOverdue = (s: (typeof stories)[number], end: Date): OverdueOut => ({
+    ...asStory(s),
+    estimatedEnd: end.toISOString(),
+    daysOverdue: Math.max(1, Math.round((today.getTime() - end.getTime()) / 86400000)),
   });
   const asBlock = (s: (typeof stories)[number]): BlockOut => ({
     ...asStory(s),
@@ -224,6 +231,12 @@ export async function GET(req: Request) {
       s.status === "DONE" && s.actualEnd && s.actualEnd >= today && s.actualEnd < todayEnd;
     const plannedToday =
       s.status !== "DONE" && fallsOn(s.startDate, s.estimatedEnd, today, todayEnd);
+    // Vencidas: no completadas cuyo fin estimado ya pasó. Antes quedaban fuera
+    // de la ventana start..end y desaparecían del daily.
+    const overdueEnd =
+      s.status !== "DONE" && s.estimatedEnd && s.estimatedEnd < today
+        ? new Date(Date.UTC(s.estimatedEnd.getUTCFullYear(), s.estimatedEnd.getUTCMonth(), s.estimatedEnd.getUTCDate()))
+        : null;
 
     for (const u of targets) {
       const dev = getDev(u.id, u.name, u.jobTitle);
@@ -239,6 +252,7 @@ export async function GET(req: Request) {
       if (completedYest) dev.yesterday.done.push(asStory(s));
       if (completedToday) dev.today.done.push(asStory(s));
       if (plannedToday) dev.today.planned.push(asStory(s));
+      if (overdueEnd) dev.today.overdue.push(asOverdue(s, overdueEnd));
       if (s.status === "BLOCKED") dev.blocked.push(asBlock(s));
     }
   }
@@ -275,6 +289,9 @@ export async function GET(req: Request) {
     });
   }
 
+  // Las más atrasadas primero.
+  for (const d of devs.values()) d.today.overdue.sort((a, b) => b.daysOverdue - a.daysOverdue);
+
   const developers = [...devs.values()]
     .map((d) => ({
       id: d.id,
@@ -289,12 +306,14 @@ export async function GET(req: Request) {
       (d) =>
         d.projects.length > 0 ||
         d.yesterday.done.length || d.yesterday.meetings.length || d.yesterday.tickets.length ||
-        d.today.planned.length || d.today.done.length || d.today.meetings.length || d.today.tickets.length ||
+        d.today.planned.length || d.today.overdue.length || d.today.done.length ||
+        d.today.meetings.length || d.today.tickets.length ||
         d.blocked.length,
     )
     .sort(
       (a, b) =>
         b.blocked.length - a.blocked.length ||
+        b.today.overdue.length - a.today.overdue.length ||
         b.today.planned.length - a.today.planned.length ||
         a.name.localeCompare(b.name),
     );
@@ -303,6 +322,7 @@ export async function GET(req: Request) {
     yesterdayDone: developers.reduce((n, d) => n + d.yesterday.done.length, 0),
     todayDone: developers.reduce((n, d) => n + d.today.done.length, 0),
     todayPlanned: developers.reduce((n, d) => n + d.today.planned.length, 0),
+    overdue: developers.reduce((n, d) => n + d.today.overdue.length, 0),
     blocked: developers.reduce((n, d) => n + d.blocked.length, 0),
   };
 

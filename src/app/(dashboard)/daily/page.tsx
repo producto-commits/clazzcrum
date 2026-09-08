@@ -14,6 +14,7 @@ type Story = {
   project: { id: string; name: string };
 };
 type Block = Story & { blockReason: string | null; blockedAt: string | null; blockedDays: number };
+type Overdue = Story & { estimatedEnd: string; daysOverdue: number };
 type Meet = { id: string; title: string; date: string; hours: number };
 type Tix = { id: string; number: number | null; subject: string; priority: string; status?: string };
 type ProjChip = { id: string; name: string; total: number; done: number; active: number };
@@ -23,7 +24,7 @@ type Dev = {
   jobTitle: string | null;
   projects: ProjChip[];
   yesterday: { done: Story[]; meetings: Meet[]; tickets: Tix[] };
-  today: { planned: Story[]; done: Story[]; meetings: Meet[]; tickets: Tix[] };
+  today: { planned: Story[]; overdue: Overdue[]; done: Story[]; meetings: Meet[]; tickets: Tix[] };
   blocked: Block[];
 };
 type Daily = {
@@ -31,7 +32,7 @@ type Daily = {
   yesterday: string;
   isToday: boolean;
   developers: Dev[];
-  totals: { yesterdayDone: number; todayDone: number; todayPlanned: number; blocked: number };
+  totals: { yesterdayDone: number; todayDone: number; todayPlanned: number; overdue: number; blocked: number };
   projects: { id: string; name: string; plannedEndAt: string | null; total: number; done: number }[];
 };
 
@@ -144,9 +145,10 @@ export default function DailyPage() {
       </div>
 
       {d && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           <Stat label="Ejecutadas ayer" value={d.totals.yesterdayDone} tone="text-success" />
           <Stat label="A realizar hoy" value={d.totals.todayPlanned} tone="text-warning" />
+          <Stat label="Vencidas" value={d.totals.overdue} tone="text-danger" />
           <Stat label="Bloqueadas" value={d.totals.blocked} tone="text-danger" />
         </div>
       )}
@@ -179,6 +181,7 @@ export default function DailyPage() {
                 <div className="flex gap-3 text-xs">
                   <span className="text-success">✔ ayer {dev.yesterday.done.length}</span>
                   <span className="text-warning">▶ hoy {dev.today.planned.length}</span>
+                  <span className="text-danger">⚠ vencidas {dev.today.overdue.length}</span>
                   <span className="text-danger">⛔ {dev.blocked.length}</span>
                 </div>
               </div>
@@ -234,6 +237,7 @@ export default function DailyPage() {
                   headerNote="Lo que toca"
                   activityTitle="A realizar"
                   activities={dev.today.planned}
+                  overdue={dev.today.overdue}
                   meetings={dev.today.meetings}
                   tickets={dev.today.tickets}
                 />
@@ -278,11 +282,16 @@ function Stat({ label, value, tone }: { label: string; value: number; tone: stri
   );
 }
 
+function overdueLabel(s: Overdue) {
+  const n = s.daysOverdue;
+  return `Vencida hace ${n} día${n === 1 ? "" : "s"} · debía cerrar el ${fmtShort(s.estimatedEnd)}`;
+}
+
 function DayColumn({
-  header, headerNote, activityTitle, activities, meetings, tickets,
+  header, headerNote, activityTitle, activities, overdue, meetings, tickets,
 }: {
   header: string; headerNote: string; activityTitle: string;
-  activities: Story[]; meetings: Meet[]; tickets: Tix[];
+  activities: Story[]; overdue?: Overdue[]; meetings: Meet[]; tickets: Tix[];
 }) {
   return (
     <div>
@@ -291,6 +300,23 @@ function DayColumn({
         <p className="text-[10px] uppercase tracking-wide text-muted">{headerNote}</p>
       </div>
       <div className="space-y-3 rounded-xl border border-border bg-background p-3">
+        {overdue && overdue.length > 0 && (
+          <div>
+            <p className="mb-1 text-[11px] font-semibold text-danger">Vencidas ({overdue.length})</p>
+            <div className="space-y-1">
+              {overdue.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/projects/${s.project.id}?story=${s.id}`}
+                  className="block rounded-lg border border-danger/30 bg-danger/5 px-2.5 py-1.5 transition hover:border-danger/60"
+                >
+                  <StoryLine s={s} bare />
+                  <p className="mt-0.5 text-[10px] font-medium text-danger">{overdueLabel(s)}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
         <div>
           <p className="mb-1 text-[11px] font-semibold text-muted">
             {activityTitle} ({activities.length})
