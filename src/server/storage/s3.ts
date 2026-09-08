@@ -24,6 +24,22 @@ const client = new S3Client({
   responseChecksumValidation: "WHEN_REQUIRED",
 });
 
+// MinIO valida la cabecera Host como hostname RFC y rechaza guiones bajos con
+// "Invalid Request (invalid hostname)". Easypanel/Swarm nombran los servicios
+// como proyecto_servicio (p. ej. clazzcrum_minio), así que conectamos a ese
+// host pero enviamos Host con guiones. SigV4 firma la cabecera tal cual se
+// envía, por lo que la firma sigue siendo válida.
+client.middlewareStack.add(
+  (next) => async (args) => {
+    const req = args.request as { hostname?: string; port?: number; headers?: Record<string, string> };
+    if (req?.hostname?.includes("_") && req.headers) {
+      req.headers.host = `${req.hostname.replace(/_/g, "-")}${req.port ? `:${req.port}` : ""}`;
+    }
+    return next(args);
+  },
+  { step: "build", name: "minioSafeHostHeader", priority: "low" },
+);
+
 // Nombre + código HTTP de un error del SDK, para diagnósticos legibles.
 function describeErr(err: unknown): string {
   const e = err as { name?: string; message?: string; $metadata?: { httpStatusCode?: number } };
