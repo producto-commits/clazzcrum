@@ -27,16 +27,22 @@ export async function issueTokenPair(userId: string): Promise<{
   const payload = await buildSessionPayload(userId);
   const accessToken = await signAccessToken(payload);
 
-  const record = await prisma.refreshToken.create({
+  // El id se genera aquí (no en BD) para poder firmar el refresh y guardar su
+  // hash en un único INSERT. Antes se insertaba un placeholder "pending" en
+  // tokenHash (columna única) y se actualizaba después: si ese segundo paso
+  // fallaba, la fila quedaba con "pending" y TODOS los logins siguientes
+  // rompían con P2002 (unique constraint) al intentar insertar otro "pending".
+  const tokenId = crypto.randomUUID();
+  const refreshToken = await signRefreshToken(userId, tokenId);
+  const tokenHash = await bcrypt.hash(refreshToken, 10);
+  await prisma.refreshToken.create({
     data: {
+      id: tokenId,
       userId,
-      tokenHash: "pending", // se reemplaza abajo
+      tokenHash,
       expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
     },
   });
-  const refreshToken = await signRefreshToken(userId, record.id);
-  const tokenHash = await bcrypt.hash(refreshToken, 10);
-  await prisma.refreshToken.update({ where: { id: record.id }, data: { tokenHash } });
 
   return { accessToken, refreshToken };
 }
